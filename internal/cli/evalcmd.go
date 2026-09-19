@@ -60,15 +60,19 @@ written by someone with full context, and ritual only sees transcripts.
 				return fmt.Errorf("no installed skills to use as ground truth — write one first, or run %s", Bold("ritual inventory"))
 			}
 
-			opts.Progress = func(name string, i, total int) {
-				fmt.Fprintf(w, "\r\033[K%s", Dim(fmt.Sprintf("  evaluating %d/%d: %s", i+1, total, name)))
+			if IsTerminal() {
+				opts.Progress = func(name string, i, total int) {
+					fmt.Fprintf(w, "\r\033[K%s", Dim(fmt.Sprintf("  evaluating %d/%d: %s", i+1, total, name)))
+				}
 			}
 			started := time.Now()
 			res, err := eval.Run(scan, truths, opts)
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(w, "\r\033[K")
+			if IsTerminal() {
+				fmt.Fprint(w, "\r\033[K")
+			}
 
 			if jsonOut {
 				enc := json.NewEncoder(w)

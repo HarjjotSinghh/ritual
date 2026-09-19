@@ -25,6 +25,11 @@ var useColor = func() bool {
 // SetColor forces colour on or off, used by --no-color.
 func SetColor(on bool) { useColor = on }
 
+// IsTerminal reports whether stdout is a terminal. Progress that redraws a line
+// with carriage returns is helpful in a terminal and unreadable in a log file,
+// so anything that redraws checks this first.
+func IsTerminal() bool { return term.IsTerminal(int(os.Stdout.Fd())) }
+
 const (
 	reset  = "\033[0m"
 	bold   = "\033[1m"

@@ -89,7 +89,10 @@ func runScan(w io.Writer, f scanFlags) error {
 	}
 	opts.Weights = score.DefaultWeights()
 
-	if !f.quiet && !f.jsonOut {
+	// Progress redraws one line, which is right in a terminal and is noise in
+	// a CI log or a pipe.
+	showProgress := !f.quiet && !f.jsonOut && IsTerminal()
+	if showProgress {
 		opts.Ingest.Progress = progressPrinter(w)
 	}
 
@@ -98,7 +101,7 @@ func runScan(w io.Writer, f scanFlags) error {
 	if err != nil {
 		return err
 	}
-	if !f.quiet && !f.jsonOut {
+	if showProgress {
 		fmt.Fprint(w, "\r\033[K")
 	}
 

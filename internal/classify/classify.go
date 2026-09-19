@@ -73,6 +73,27 @@ var hookTriggers = map[string]string{
 func Classify(c mine.Candidate, s score.Result, inv *inventory.Inventory, minScore float64) Decision {
 	vocab := candidateVocabulary(c)
 
+	// A run that invoked a skill is evidence about that skill. Proposing to
+	// write it again would be the worst suggestion this tool could make, so
+	// the reference is trusted over any vocabulary heuristic.
+	if c.SkillRef != "" {
+		d := Decision{
+			Kind: KindUpdate, Confidence: c.SkillRefShare, Similarity: round2(c.SkillRefShare),
+			Rationale: fmt.Sprintf(
+				"%.0f%% of these runs invoked the %q skill you already have. What is useful here is the difference: the steps below are what actually happened, which is worth comparing against what the skill says to do.",
+				c.SkillRefShare*100, c.SkillRef),
+		}
+		if inv != nil {
+			for _, item := range inv.Items {
+				if strings.EqualFold(item.Name, c.SkillRef) {
+					d.Existing = &item
+					break
+				}
+			}
+		}
+		return d
+	}
+
 	if inv != nil {
 		if match, ok := inv.BestMatch(vocab, inventory.KindSkill, inventory.KindCommand); ok {
 			return Decision{

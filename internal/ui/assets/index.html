@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ritual</title>
+<style>
+  :root {
+    --bg: #fbfaf8; --panel: #ffffff; --ink: #16150f; --muted: #6b6759;
+    --line: #e6e1d6; --accent: #7c4a1e; --accent-soft: #f2e8dd;
+    --good: #2f6f3e; --warn: #8a6100; --bad: #9a2c2c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, -apple-system, "Segoe UI", Inter, system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121110; --panel: #1a1917; --ink: #ece7dd; --muted: #97907f;
+      --line: #2c2a26; --accent: #d59a5f; --accent-soft: #2a231b;
+      --good: #6fbe7f; --warn: #d6a743; --bad: #e07a7a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    border-bottom: 1px solid var(--line); padding: 20px 16px;
+    display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: baseline;
+  }
+  header h1 { font-size: 19px; margin: 0; letter-spacing: -0.01em; }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  .meta { color: var(--muted); font-size: 13px; font-family: var(--mono); }
+  main { max-width: 1180px; margin: 0 auto; padding: 0 16px 72px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 8px; }
+  .chip {
+    font-family: var(--mono); font-size: 12px; padding: 5px 10px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--panel);
+  }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 18px; }
+  @media (min-width: 900px) { .layout { grid-template-columns: 380px minmax(0, 1fr); } }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; cursor: pointer; text-align: left; width: 100%;
+    font: inherit; color: inherit; transition: border-color .12s ease;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: 13px; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .kind {
+    font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .06em; padding: 2px 7px; border-radius: 4px;
+    border: 1px solid var(--line); color: var(--muted);
+  }
+  .kind[data-kind="skill"] { color: var(--good); border-color: currentColor; }
+  .kind[data-kind="rule"] { color: var(--accent); border-color: currentColor; }
+  .kind[data-kind="hook"], .kind[data-kind="update"] { color: var(--warn); border-color: currentColor; }
+  .score { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: auto; }
+  .detail { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  .detail h2 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.02em; }
+  .detail .lede { color: var(--muted); margin: 0 0 18px; }
+  .detail h4 {
+    margin: 22px 0 8px; font-size: 12px; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted);
+  }
+  ol.steps { margin: 0; padding-left: 20px; }
+  ol.steps li { margin-bottom: 6px; }
+  .support { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .bars { display: grid; grid-template-columns: 120px 1fr 44px; gap: 6px 10px; align-items: center; font-size: 13px; }
+  .bar { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .evidence { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .evidence li { margin-bottom: 6px; list-style: none; }
+  .evidence ul { padding: 0; margin: 0; }
+  pre {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px; overflow: auto; font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.5; max-height: 460px;
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+  button.go {
+    font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 7px;
+    border: 1px solid var(--accent); background: var(--accent); color: var(--bg); cursor: pointer;
+  }
+  button.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  label.target { font-family: var(--mono); font-size: 12px; display: inline-flex; gap: 5px; align-items: center; }
+  .note { color: var(--warn); font-size: 13px; margin: 6px 0 0; }
+  .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .filters button {
+    font: inherit; font-size: 12px; font-family: var(--mono); padding: 4px 10px;
+    border-radius: 999px; border: 1px solid var(--line); background: var(--panel);
+    color: var(--muted); cursor: pointer;
+  }
+  .filters button[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
+  footer { color: var(--muted); font-size: 12.5px; padding: 28px 16px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ritual <span>— workflows mined from your agent history</span></h1>
+  <div class="meta">report generated {{.Generated}}{{if not .AllowWrite}} · read-only{{end}}</div>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="layout">
+    <div>
+      <div class="filters" id="filters"></div>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="detail" id="detail"><p class="empty">Select a finding to see its evidence.</p></div>
+  </div>
+</main>
+
+<footer>Everything on this page came from files on this machine. Nothing was uploaded.</footer>
+
+<script>
+const TOKEN = {{.Token}};
+const ALLOW_WRITE = {{.AllowWrite}};
+const api = (path, opts) => fetch(path + (path.includes('?') ? '&' : '?') + 'token=' + TOKEN, opts).then(r => r.json());
+
+let report = null;
+let selected = null;
+let filter = 'all';
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function entries() {
+  const findings = (report.findings || []).map(f => ({ ...f, _type: 'finding' }));
+  const rules = (report.rules || []).map(r => ({ ...r, _type: 'rule', title: r.text, score: { total: r.occurrences * 10 } }));
+  const all = [...findings, ...rules];
+  if (filter === 'all') return all.filter(e => e.decision?.kind !== 'ignore');
+  if (filter === 'everything') return all;
+  return all.filter(e => e.decision?.kind === filter);
+}
+
+function renderStats() {
+  const w = report.window || {};
+  const chips = [
+    `${w.sessions ?? 0} sessions`,
+    `${w.agents ?? 0} agents`,
+    `${report.arcs ?? 0} task arcs`,
+    `${report.clustered ?? 0} in a repeating workflow`,
+  ];
+  if (w.earliest) chips.push(`${w.earliest.slice(0,10)} → ${(w.latest||'').slice(0,10)}`);
+  document.getElementById('stats').innerHTML = chips.map(c => `<span class="chip">${esc(c)}</span>`).join('');
+
+  const kinds = ['all', 'skill', 'command', 'rule', 'hook', 'reference', 'update', 'everything'];
+  document.getElementById('filters').innerHTML = kinds.map(k =>
+    `<button data-filter="${k}" aria-pressed="${k === filter}">${k}</button>`).join('');
+  document.querySelectorAll('#filters button').forEach(b =>
+    b.onclick = () => { filter = b.dataset.filter; renderStats(); renderList(); });
+}
+
+function renderList() {
+  const list = document.getElementById('list');
+  const items = entries();
+  if (!items.length) {
+    list.innerHTML = '<p class="empty">Nothing in this category.</p>';
+    return;
+  }
+  list.innerHTML = items.map(e => `
+    <button class="card" data-id="${esc(e.id)}" aria-selected="${selected === e.id}">
+      <div class="row">
+        <span class="kind" data-kind="${esc(e.decision?.kind || 'rule')}">${esc(e.decision?.kind || 'rule')}</span>
+        <span class="score">${Math.round(e.score?.total ?? 0)}</span>
+      </div>
+      <h3>${esc(e.title || e.text)}</h3>
+      <p>${esc(e.summary || `${e.occurrences} times across ${e.sessions} sessions`)}</p>
+    </button>`).join('');
+  document.querySelectorAll('.card').forEach(c => c.onclick = () => select(c.dataset.id));
+}
+
+async function select(id) {
+  selected = id;
+  renderList();
+  const e = entries().find(x => x.id === id) || (report.findings || []).find(x => x.id === id);
+  if (!e) return;
+  const detail = document.getElementById('detail');
+  detail.innerHTML = e._type === 'rule' ? ruleView(e) : findingView(e);
+  wireActions(e);
+}
+
+function findingView(f) {
+  const steps = (f.steps || []).map((s, i) =>
+    `<li>${esc(describeStep(s.action))} <span class="support">${s.count}/${f.occurrences} runs</span></li>`).join('');
+  const comps = f.score?.components || {};
+  const bars = Object.entries(comps).map(([k, v]) => `
+    <span>${esc(k.replace(/_/g, ' '))}</span>
+    <span class="bar"><i style="width:${Math.round(v * 100)}%"></i></span>
+    <span class="support">${v.toFixed(2)}</span>`).join('');
+  const penalties = (f.score?.penalties || []).map(p =>
+    `<p class="note">penalty · ${esc(p.name)}: ${esc(p.reason)}</p>`).join('');
+  const evidence = (f.evidence || []).map(e =>
+    `<li>${esc((e.at || '').slice(0, 10))} · ${esc(e.agent)} — ${esc(e.intent)}</li>`).join('');
+  const corrections = (f.corrections || []).map(c => `<li>${esc(c.text)}</li>`).join('');
+
+  return `
+    <h2>${esc(f.title)}</h2>
+    <p class="lede">${esc(f.summary)}</p>
+    <div class="row">
+      <span class="kind" data-kind="${esc(f.decision?.kind)}">${esc(f.decision?.kind)}</span>
+      <span class="score">score ${Math.round(f.score?.total ?? 0)}/100 · cohesion ${Math.round((f.cohesion ?? 0) * 100)}%</span>
+    </div>
+    <p class="lede">${esc(f.decision?.rationale)}</p>
+    ${steps ? `<h4>Canonical sequence</h4><ol class="steps">${steps}</ol>` : ''}
+    ${corrections ? `<h4>Corrections during these runs</h4><ul class="evidence">${corrections}</ul>` : ''}
+    <h4>Score breakdown</h4><div class="bars">${bars}</div>${penalties}
+    <h4>Evidence</h4><ul class="evidence">${evidence}</ul>
+    <h4>Artifact</h4><pre id="preview">loading…</pre>
+    ${actionBar()}`;
+}
+
+function ruleView(r) {
+  const examples = (r.examples || []).map(e =>
+    `<li>${esc((e.at || '').slice(0, 10))} · ${esc(e.agent)} — ${esc(e.text)}</li>`).join('');
+  return `
+    <h2>Standing preference</h2>
+    <p class="lede">${esc(r.text)}</p>
+    <div class="row">
+      <span class="kind" data-kind="rule">${esc(r.decision?.kind || 'rule')}</span>
+      <span class="score">stated ${r.occurrences}× across ${r.sessions} sessions</span>
+    </div>
+    <p class="lede">${esc(r.decision?.rationale)}</p>
+    <h4>Every time it was said</h4><ul class="evidence">${examples}</ul>
+    <h4>Artifact</h4><pre id="preview">loading…</pre>
+    ${actionBar()}`;
+}
+
+function actionBar() {
+  const targets = ['claude', 'codex', 'cursor', 'opencode', 'gemini', 'shared'];
+  return `
+    <div class="actions">
+      ${targets.map(t => `<label class="target"><input type="checkbox" value="${t}" ${t === 'claude' ? 'checked' : ''}> ${t}</label>`).join('')}
+    </div>
+    <div class="actions">
+      <button class="go ghost" id="plan">Preview plan</button>
+      <button class="go" id="install" ${ALLOW_WRITE ? '' : 'disabled title="restart with --allow-install"'}>Install</button>
+      <span class="support" id="status"></span>
+    </div>`;
+}
+
+function describeStep(action) {
+  if (action.startsWith('shell:')) return 'Run `' + action.slice(6) + '`';
+  if (action.startsWith('mcp:')) return 'Call the ' + action.slice(4).split(':')[0] + ' integration';
+  if (action.startsWith('tool:')) return 'Use ' + action.slice(5).replace(/-/g, ' ');
+  return ({
+    read: 'Read the relevant files', write: 'Write the new file', edit: 'Edit the affected files',
+    search: 'Search the codebase', list: 'List the candidate files', browser: 'Verify in a browser',
+    plan: 'Write the task list', subagent: 'Delegate to subagents', skill: 'Invoke the matching skill',
+  })[action] || action;
+}
+
+async function wireActions(e) {
+  const bundle = await api('/api/artifact?id=' + encodeURIComponent(e.id));
+  const pre = document.getElementById('preview');
+  if (pre) pre.textContent = (bundle.files || []).map(f => `── ${f.path} ──\n${f.content}`).join('\n\n');
+
+  const targets = () => [...document.querySelectorAll('.target input:checked')].map(i => i.value);
+  const status = document.getElementById('status');
+
+  document.getElementById('plan').onclick = async () => {
+    status.textContent = 'planning…';
+    const res = await api('/api/install', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: e.id, targets: targets(), dry_run: true }),
+    });
+    status.textContent = res.error || (res.plans || []).flatMap(p => p.writes)
+      .map(w => `${w.action} ${w.path}`).join('  ·  ') || 'nothing to do';
+  };
+
+  const installBtn = document.getElementById('install');
+  if (installBtn && ALLOW_WRITE) {
+    installBtn.onclick = async () => {
+      status.textContent = 'installing…';
+      const res = await api('/api/install', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: e.id, targets: targets() }),
+      });
+      status.textContent = res.error || `installed: ${(res.applied || []).join(', ') || 'nothing (already exists)'}`;
+    };
+  }
+}
+
+api('/api/report').then(r => {
+  report = r;
+  renderStats();
+  renderList();
+  const first = entries()[0];
+  if (first) select(first.id);
+});
+</script>
+</body>
+</html>

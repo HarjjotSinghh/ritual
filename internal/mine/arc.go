@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/HarjjotSinghh/ritual/internal/ingest"
 	"github.com/HarjjotSinghh/ritual/internal/session"
 	"github.com/HarjjotSinghh/ritual/internal/textutil"
 )
@@ -166,8 +167,10 @@ func newAccumulator(s session.Session) *arcAccumulator {
 
 func (a *arcAccumulator) begin(t session.Turn, s session.Session) {
 	a.open = true
-	a.arc.Intent = t.Text
-	a.arc.Prompts = []string{t.Text}
+	refs, cleaned := ingest.ExtractSkillRefs(t.Text)
+	a.arc.Skills = refs
+	a.arc.Intent = cleaned
+	a.arc.Prompts = []string{cleaned}
 	a.arc.Start = t.At
 	a.arc.End = t.At
 	a.arc.Turns = 1
@@ -183,10 +186,25 @@ func (a *arcAccumulator) beginAnonymous(t session.Turn, s session.Session) {
 
 func (a *arcAccumulator) addPrompt(text string, max int) {
 	a.arc.Turns++
+	refs, cleaned := ingest.ExtractSkillRefs(text)
+	for _, r := range refs {
+		if !contains(a.arc.Skills, r) {
+			a.arc.Skills = append(a.arc.Skills, r)
+		}
+	}
 	if max > 0 && len(a.arc.Prompts) >= max {
 		return
 	}
-	a.arc.Prompts = append(a.arc.Prompts, text)
+	a.arc.Prompts = append(a.arc.Prompts, cleaned)
+}
+
+func contains(values []string, want string) bool {
+	for _, v := range values {
+		if v == want {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *arcAccumulator) addStep(t session.Turn) {

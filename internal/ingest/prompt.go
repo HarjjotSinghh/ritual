@@ -154,3 +154,54 @@ func Gist(s string, max int) string {
 	}
 	return ""
 }
+
+// skillRefRE matches a reference to an installed Agent Skill. Harnesses load a
+// skill by injecting its path or its name into the turn, so a session that used
+// one leaves a trace in the prompt text.
+//
+// This matters more than it looks. Without it, every run of an existing skill
+// looks like a brand-new recurring workflow, and ritual proposes writing the
+// skill the operator already wrote — the single most embarrassing thing this
+// tool could do.
+var skillRefRE = regexp.MustCompile(`(?i)[\w.${}/~-]*skills/([a-z0-9][a-z0-9_-]{2,60})(?:/SKILL\.md)?\b`)
+
+// skillNameRE matches the harness's own skill announcement forms, such as
+// `<skill>name</skill>`, "Using the name skill", or a plugin-qualified
+// `plugin:name` invocation.
+var skillNameRE = regexp.MustCompile(`(?i)<skill(?:[^>]*)>\s*([a-z0-9][a-z0-9_:-]{2,60})\s*</skill>|\bUsing\s+(?:the\s+)?([a-z0-9][a-z0-9_:-]{2,60})\s+skill\b`)
+
+// ExtractSkillRefs returns the installed skills a prompt references, along with
+// the prompt text with those references removed so they cannot become the
+// workflow's name.
+func ExtractSkillRefs(text string) (refs []string, cleaned string) {
+	if text == "" {
+		return nil, text
+	}
+	cleaned = text
+	seen := map[string]struct{}{}
+	add := func(name string) {
+		name = strings.ToLower(strings.TrimSpace(name))
+		if name == "" {
+			return
+		}
+		if idx := strings.LastIndex(name, ":"); idx >= 0 {
+			name = name[idx+1:]
+		}
+		if _, ok := seen[name]; ok {
+			return
+		}
+		seen[name] = struct{}{}
+		refs = append(refs, name)
+	}
+
+	for _, m := range skillRefRE.FindAllStringSubmatch(text, -1) {
+		add(m[1])
+	}
+	for _, m := range skillNameRE.FindAllStringSubmatch(text, -1) {
+		add(m[1])
+		add(m[2])
+	}
+	cleaned = skillRefRE.ReplaceAllString(cleaned, " ")
+	cleaned = skillNameRE.ReplaceAllString(cleaned, " ")
+	return refs, strings.TrimSpace(cleaned)
+}

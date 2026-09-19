@@ -45,6 +45,10 @@ type Arc struct {
 	Paths []string `json:"paths,omitempty"`
 	// Corrections are the human's mid-arc redirections.
 	Corrections []Correction `json:"corrections,omitempty"`
+	// Skills are the installed Agent Skills this arc invoked. An arc that ran
+	// a skill is evidence about that skill, not evidence for writing a new
+	// one.
+	Skills []string `json:"skills,omitempty"`
 
 	Turns  int `json:"turns"`
 	Errors int `json:"errors"`
@@ -154,6 +158,12 @@ type Candidate struct {
 	Tools       []string     `json:"tools"`
 	Paths       []string     `json:"paths,omitempty"`
 	Corrections []Correction `json:"corrections,omitempty"`
+	// SkillRef names an installed skill the runs invoked, when most of them
+	// did. It turns "here is a workflow you should automate" into the more
+	// useful "here is how your usage has drifted from the skill you wrote".
+	SkillRef string `json:"skill_ref,omitempty"`
+	// SkillRefShare is the fraction of runs that invoked it.
+	SkillRefShare float64 `json:"skill_ref_share,omitempty"`
 
 	Cadence  Cadence    `json:"cadence"`
 	Evidence []Evidence `json:"evidence"`

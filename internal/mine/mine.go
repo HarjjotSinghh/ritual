@@ -93,6 +93,7 @@ func buildCandidate(c Cluster, globalDF map[string]int, phrases *PhraseIndex, co
 	commands := map[string]int{}
 	tools := map[string]int{}
 	paths := map[string]int{}
+	skillRefs := map[string]int{}
 	turns := make([]float64, 0, len(c.Arcs))
 	durations := make([]float64, 0, len(c.Arcs))
 	errored := 0
@@ -120,6 +121,17 @@ func buildCandidate(c Cluster, globalDF map[string]int, phrases *PhraseIndex, co
 			errored++
 		}
 		cand.Corrections = append(cand.Corrections, a.Corrections...)
+		for _, skill := range a.Skills {
+			skillRefs[skill]++
+		}
+	}
+
+	if top := textutil.TopN(skillRefs, 1); len(top) > 0 {
+		share := float64(skillRefs[top[0]]) / float64(len(c.Arcs))
+		if share >= 0.5 {
+			cand.SkillRef = top[0]
+			cand.SkillRefShare = round3(share)
+		}
 	}
 
 	cand.Sessions = len(sessions)
@@ -340,6 +352,14 @@ func domainHint(c Candidate) []string {
 // ranked keywords, which is where the unreadable titles come from and why it is
 // last.
 func titleFor(c Candidate, arcs []Arc) string {
+	// When the runs invoked a skill, that skill's name is the workflow's name.
+	// Anything mined from the prompts would be a worse label for the same
+	// thing, and would hide the fact that this is drift in something the
+	// operator already wrote.
+	if c.SkillRef != "" {
+		return c.SkillRef
+	}
+
 	verb := dominantVerb(arcs)
 	domains := domainHint(c)
 

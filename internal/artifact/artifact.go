@@ -56,6 +56,8 @@ func Build(f report.Finding) Bundle {
 		return buildHook(f)
 	case classify.KindReference:
 		return buildReference(f)
+	case classify.KindUpdate:
+		return buildUpdate(f)
 	default:
 		return buildSkill(f)
 	}
@@ -145,6 +147,67 @@ func buildReference(f report.Finding) Bundle {
 	return b
 }
 
+// buildUpdate renders a drift report rather than a new artifact.
+//
+// When the runs already invoked a skill, generating a second skill with the
+// same name is the one outcome nobody wants. What is actually useful is the
+// difference: what the transcripts show happening, next to what the installed
+// skill says to do. ritual can see the first half honestly and cannot see the
+// second, so it writes the first and leaves the comparison to a person.
+func buildUpdate(f report.Finding) Bundle {
+	name := f.SkillRef
+	if name == "" && f.Decision.Existing != nil {
+		name = f.Decision.Existing.Name
+	}
+	if name == "" {
+		name = f.Slug
+	}
+	slug := skillSlug(name)
+
+	b := Bundle{
+		Kind: classify.KindUpdate, Name: name + " (drift report)", Slug: slug,
+		Description: fmt.Sprintf("How %d recent runs of %s actually went", f.Occurrences, name),
+	}
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "# %s — drift report\n\n", name)
+	fmt.Fprintf(&sb, "%s\n\n", f.Decision.Rationale)
+	if f.Decision.Existing != nil {
+		fmt.Fprintf(&sb, "Installed at `%s`.\n\n", f.Decision.Existing.Path)
+	}
+
+	sb.WriteString("## What the runs actually did\n\n")
+	if len(f.Steps) == 0 {
+		sb.WriteString("No step appeared in enough runs to be called part of the procedure.\n\n")
+	} else {
+		for i, step := range f.Steps {
+			fmt.Fprintf(&sb, "%d. %s — *%d of %d runs*\n", i+1, mine.DescribeStep(step.Action), step.Count, f.Occurrences)
+		}
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString("## What to check\n\n")
+	sb.WriteString("- Steps above that the skill does not mention. Those are habits that never made it into the file.\n")
+	sb.WriteString("- Steps the skill lists that appear in few runs or none. Those are either dead instructions or work being skipped.\n")
+	if f.ErrorRate >= 0.3 {
+		fmt.Fprintf(&sb, "- %.0f%% of runs hit an error or a retry, which usually means the skill is missing a precondition.\n", f.ErrorRate*100)
+	}
+	if len(f.Corrections) > 0 {
+		sb.WriteString("- The corrections below were issued while the skill was already loaded, so the skill did not prevent them.\n")
+	}
+	sb.WriteString("\n")
+
+	writePreferences(&sb, f)
+	writeEvidence(&sb, f)
+
+	b.Files = append(b.Files, File{Path: slug + "-drift.md", Content: sb.String()})
+	b.Notes = []string{
+		"This is a report, not an artifact to install. `ritual install` will refuse it.",
+		"ritual can see what happened in the transcripts. It cannot read the skill and tell you which half is wrong — that comparison is yours.",
+	}
+	return b
+}
+
 // BuildRule renders a standing preference as a block to append to a rules file.
 func BuildRule(r report.RuleFinding) Bundle {
 	b := Bundle{
@@ -210,6 +273,8 @@ func describe(f report.Finding) string {
 	var b strings.Builder
 	b.WriteString("Use when ")
 	switch {
+	case f.SkillRef != "":
+		b.WriteString("the work matches the " + f.SkillRef + " skill")
 	case len(f.Phrases) > 0 && f.Phrases[0].Score >= mine.StrongPhrase:
 		b.WriteString("the task involves " + f.Phrases[0].Phrase)
 	case len(f.Repos) == 1:

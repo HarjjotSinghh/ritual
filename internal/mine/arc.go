@@ -262,6 +262,11 @@ func (a *arcAccumulator) touch(at time.Time) {
 func (a *arcAccumulator) finish() Arc {
 	a.open = false
 	arc := a.arc
+	if arc.Intent == "" && len(arc.Skills) > 0 {
+		// The prompt was a skill invocation and nothing else. Naming it after
+		// the skill is both accurate and more useful than the step list.
+		arc.Intent = "ran the " + arc.Skills[0] + " skill"
+	}
 	if arc.Intent == "" && len(arc.Steps) > 0 {
 		arc.Intent = "untitled work: " + strings.Join(arc.Steps[:min(3, len(arc.Steps))], ", ")
 	}

@@ -143,6 +143,11 @@ func PlanInstall(b artifact.Bundle, t Target, opts Options) (Plan, error) {
 
 func destinationFor(b artifact.Bundle, f artifact.File, t Target) (string, error) {
 	switch b.Kind {
+	case classify.KindUpdate:
+		// An update is a comparison to read, not a file to add. Installing it
+		// would put a second document next to the skill it is about, which is
+		// the clutter the classification exists to prevent.
+		return "", fmt.Errorf("%q is a drift report for an existing artifact, not something to install — run `ritual build` and read it", b.Name)
 	case classify.KindRule:
 		if t.RulesFile == "" {
 			return "", fmt.Errorf("%s has no rules file to append to", t.DisplayName)

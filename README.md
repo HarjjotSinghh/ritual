@@ -84,7 +84,7 @@ worse than leaving it alone:
 | `rule` | a standing preference: *always*, *never* | a preference you have to invoke is one you will forget |
 | `hook` | work that always follows an event | you should not have to remember it at all |
 | `reference` | the agent keeps rediscovering the same facts | write the answer down once |
-| `update` | you already have a skill for this | adding a second one is how skill directories rot |
+| `update` | you already have a skill for this | adding a second one is how skill directories rot — `ritual build` writes a drift report instead |
 | `ignore` | real pattern, not worth an artifact | `git status` runs a hundred times a week |
 
 **Every suggestion carries its receipts.** No finding is a vibe. Each one

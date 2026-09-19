@@ -14,12 +14,13 @@ import (
 
 func newInstallCmd() *cobra.Command {
 	var (
-		targets []string
-		dryRun  bool
-		force   bool
-		project bool
-		yes     bool
-		author  string
+		targets  []string
+		dryRun   bool
+		force    bool
+		project  bool
+		yes      bool
+		author   string
+		noAuthor bool
 	)
 	cmd := &cobra.Command{
 		Use:   "install <id>...",
@@ -43,6 +44,9 @@ hand, and a slug collision must not cost you it.
 			}
 			if author == "" {
 				author = cfg.Author
+			}
+			if noAuthor {
+				author = "none"
 			}
 
 			resolved := make([]install.Target, 0, len(targets))
@@ -120,6 +124,7 @@ hand, and a slug collision must not cost you it.
 	cmd.Flags().BoolVar(&project, "project", false, "also install into the current repository")
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip the confirmation prompt")
 	cmd.Flags().StringVar(&author, "author", "", "agent CLI used to improve the prose, or none")
+	cmd.Flags().BoolVar(&noAuthor, "no-author", false, "never call an agent CLI; use the deterministic template")
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "targets",

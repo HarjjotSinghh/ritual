@@ -135,3 +135,25 @@ func TestNotesWarnAboutLooseClusters(t *testing.T) {
 		t.Fatalf("a loose cluster produced no warning: %v", b.Notes)
 	}
 }
+
+func TestUpdateProducesADriftReportNotASkill(t *testing.T) {
+	f := finding()
+	f.Decision.Kind = classify.KindUpdate
+	f.SkillRef = "storefront-verify"
+	f.SkillRefShare = 0.9
+
+	b := Build(f)
+	if b.Kind != classify.KindUpdate {
+		t.Fatalf("kind = %q", b.Kind)
+	}
+	if b.Files[0].Path != "storefront-verify-drift.md" {
+		t.Fatalf("path = %q, want a drift report rather than a SKILL.md", b.Files[0].Path)
+	}
+	content := b.Files[0].Content
+	if strings.HasPrefix(content, "---") {
+		t.Fatal("a drift report must not carry skill frontmatter; it would install as a duplicate skill")
+	}
+	if !strings.Contains(content, "What the runs actually did") {
+		t.Fatalf("the report has no observed sequence:\n%s", content)
+	}
+}

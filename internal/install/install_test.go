@@ -140,3 +140,14 @@ func TestRuleWithoutARulesFileIsAnError(t *testing.T) {
 		t.Fatal("planning a rule against a target with no rules file should fail loudly")
 	}
 }
+
+func TestUpdateIsRefused(t *testing.T) {
+	tgt := target(t)
+	bundle := artifact.Bundle{
+		Kind: classify.KindUpdate, Name: "storefront-verify (drift report)", Slug: "storefront-verify",
+		Files: []artifact.File{{Path: "storefront-verify-drift.md", Content: "# report"}},
+	}
+	if _, err := PlanInstall(bundle, tgt, Options{}); err == nil {
+		t.Fatal("a drift report was planned for installation; it would sit next to the skill it describes")
+	}
+}

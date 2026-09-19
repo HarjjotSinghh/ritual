@@ -479,6 +479,7 @@ func (b *turnBuilder) add(t session.Turn) {
 }
 
 func (b *turnBuilder) text(s string) string {
+	s = repairMojibake(s)
 	s = b.red.Text(s)
 	if b.lim.MaxTextBytes > 0 && len(s) > b.lim.MaxTextBytes {
 		s = s[:b.lim.MaxTextBytes] + "…"

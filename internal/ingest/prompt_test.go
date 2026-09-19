@@ -87,3 +87,19 @@ func TestGistDropsCodeFences(t *testing.T) {
 		t.Fatalf("Gist = %q", got)
 	}
 }
+
+func TestRepairMojibake(t *testing.T) {
+	broken := mis("\u2014")
+	got := repairMojibake(byteOrderMark + "# /storefront-verify " + broken + " prove what went live works")
+	want := "# /storefront-verify \u2014 prove what went live works"
+	if got != want {
+		t.Fatalf("repairMojibake = %q, want %q", got, want)
+	}
+}
+
+func TestRepairMojibakeLeavesOrdinaryTextAlone(t *testing.T) {
+	in := "d\u00e9j\u00e0 vu \u2014 na\u00efve caf\u00e9"
+	if got := repairMojibake(in); got != in {
+		t.Fatalf("repairMojibake rewrote valid text: %q", got)
+	}
+}

@@ -170,6 +170,12 @@ var skillRefRE = regexp.MustCompile(`(?i)[\w.${}/~-]*skills/([a-z0-9][a-z0-9_-]{
 // `plugin:name` invocation.
 var skillNameRE = regexp.MustCompile(`(?i)<skill(?:[^>]*)>\s*([a-z0-9][a-z0-9_:-]{2,60})\s*</skill>|\bUsing\s+(?:the\s+)?([a-z0-9][a-z0-9_:-]{2,60})\s+skill\b`)
 
+// skillPreambleRE matches the boilerplate a harness prints around a skill it
+// has just loaded. Left in, it becomes the "intent" of every skill invocation,
+// and a report full of "Base directory for this skill:" tells the reader
+// nothing about what was being done.
+var skillPreambleRE = regexp.MustCompile(`(?im)^\s*(?:base directory for this skill|launching skill|using skill|skill directory|loaded skill)\s*:?.*$`)
+
 // ExtractSkillRefs returns the installed skills a prompt references, along with
 // the prompt text with those references removed so they cannot become the
 // workflow's name.
@@ -203,5 +209,6 @@ func ExtractSkillRefs(text string) (refs []string, cleaned string) {
 	}
 	cleaned = skillRefRE.ReplaceAllString(cleaned, " ")
 	cleaned = skillNameRE.ReplaceAllString(cleaned, " ")
+	cleaned = skillPreambleRE.ReplaceAllString(cleaned, " ")
 	return refs, strings.TrimSpace(cleaned)
 }

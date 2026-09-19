@@ -97,8 +97,11 @@ type RuleCandidate struct {
 // "always test mobile too", "also check mobile", and "don't forget the mobile
 // layout" become one rule with three citations instead of three rules.
 //
-// minOccurrences guards the output: a preference stated once may have been true
-// only of that task.
+// A candidate has to clear two bars. minOccurrences guards against a
+// preference stated once, which may have been true only of that task. Two
+// distinct sessions are then required on top of it, because restating
+// something twice inside one conversation is the operator correcting a single
+// misunderstanding, not describing how they always work.
 func GroupCorrections(arcs []Arc, minOccurrences int) []RuleCandidate {
 	type group struct {
 		tokens   textutil.Set
@@ -159,7 +162,7 @@ func GroupCorrections(arcs []Arc, minOccurrences int) []RuleCandidate {
 
 	out := make([]RuleCandidate, 0, len(groups))
 	for _, g := range groups {
-		if len(g.members) < minOccurrences {
+		if len(g.members) < minOccurrences || len(g.sessions) < 2 {
 			continue
 		}
 		rc := RuleCandidate{

@@ -179,7 +179,7 @@ file, where it applies to every turn without being invoked.
 			}
 			fmt.Fprintf(w, "\n%s\n", Bold(fmt.Sprintf("%d standing preferences", len(rules))))
 			for _, r := range rules {
-				fmt.Fprintf(w, "\n  %s %s\n", Cyan(r.ID), Dim(fmt.Sprintf("stated %dx in %d sessions", r.Occurrences, r.Sessions)))
+				fmt.Fprintf(w, "\n  %s %s\n", Cyan(r.ID), Dim(fmt.Sprintf("stated %s across %s", plural(r.Occurrences, "time", "times"), plural(r.Sessions, "session", "sessions"))))
 				fmt.Fprintf(w, "%s\n", wrapBody(oneLine(r.Text), 74, "    "))
 			}
 			fmt.Fprintf(w, "\n%s %s\n", Dim("install one with"), Cyan("ritual rules install <id>"))

@@ -162,7 +162,7 @@ func renderRule(r report.RuleFinding) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "\n%s  %s\n", Bold("Standing preference"), Dim("("+r.ID+")"))
 	fmt.Fprintf(&b, "  %s\n\n", wrapBody(r.Text, 76, "  "))
-	fmt.Fprintf(&b, "%s %s   %s\n", Dim("verdict"), KindBadge(string(r.Decision.Kind)), Dim(fmt.Sprintf("stated %d times in %d sessions", r.Occurrences, r.Sessions)))
+	fmt.Fprintf(&b, "%s %s   %s\n", Dim("verdict"), KindBadge(string(r.Decision.Kind)), Dim(fmt.Sprintf("stated %s across %s", plural(r.Occurrences, "time", "times"), plural(r.Sessions, "session", "sessions"))))
 	fmt.Fprintf(&b, "%s\n", wrap(r.Decision.Rationale, 78, "  "))
 	if len(r.Repos) > 0 {
 		fmt.Fprintf(&b, "\n  repositories: %s\n", strings.Join(r.Repos, ", "))
@@ -179,6 +179,16 @@ func renderRule(r report.RuleFinding) string {
 	}
 	fmt.Fprintf(&b, "\n%s\n  %s\n", Bold("Next"), Cyan("ritual rules install "+r.ID))
 	return b.String()
+}
+
+// plural renders a count with the right noun, because "1 sessions" in output a
+// person reads every day is the kind of small wrongness that makes a tool feel
+// unfinished.
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return fmt.Sprintf("%d %s", n, one)
+	}
+	return fmt.Sprintf("%d %s", n, many)
 }
 
 // wrap renders a paragraph at a fixed width with a hanging indent, because a

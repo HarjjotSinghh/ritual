@@ -99,7 +99,10 @@ stop `ritual` from proposing a skill the operator wrote months ago.
 
 **Classification** decides what the finding should become. The order matters: an
 invoked skill takes precedence over any heuristic, because proposing to rewrite
-a skill the operator just ran is the worst suggestion this tool could make.
+a skill the operator just ran is the worst suggestion this tool could make. That
+case produces a drift report instead — what the transcripts show happening, for
+the operator to hold against what their skill says to do — and `ritual install`
+refuses it, because a report belongs next to nothing.
 
 ## 5. Emission — `internal/artifact`, `internal/authoring`, `internal/install`
 

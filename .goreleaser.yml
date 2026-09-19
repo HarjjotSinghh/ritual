@@ -33,7 +33,8 @@ archives:
     files:
       - README.md
       - LICENSE
-      - docs/**/*
+      - docs/*.md
+      - CHANGELOG.md
 
 checksum:
   name_template: checksums.txt
@@ -62,20 +63,33 @@ changelog:
       - '^test:'
       - '^chore:'
 
-brews:
-  - repository:
+# The tap publishers need a token with write access to two other repositories.
+# Without it they are skipped rather than failing the release: a release whose
+# binaries exist but whose Homebrew formula did not update is a fixable
+# situation, and a red release that published everything anyway is a confusing
+# one.
+homebrew_casks:
+  - skip_upload: "{{ .Env.SKIP_TAPS }}"
+    repository:
       owner: HarjjotSinghh
       name: homebrew-tap
       token: "{{ .Env.TAP_TOKEN }}"
-    directory: Formula
+    directory: Casks
     homepage: https://github.com/HarjjotSinghh/ritual
     description: Mine your coding-agent history for the workflows you keep repeating
     license: Apache-2.0
-    test: |
-      system "#{bin}/ritual", "version"
+    hooks:
+      post:
+        # Gatekeeper quarantines anything downloaded by a cask, and the binary
+        # is not notarized, so macOS would refuse to run it on first launch.
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/ritual"]
+          end
 
 scoops:
-  - repository:
+  - skip_upload: "{{ .Env.SKIP_TAPS }}"
+    repository:
       owner: HarjjotSinghh
       name: scoop-bucket
       token: "{{ .Env.TAP_TOKEN }}"

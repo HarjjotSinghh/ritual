@@ -18,6 +18,17 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Decide whether the taps can be published
+        id: taps
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          if [ -n "$TAP_TOKEN" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::TAP_TOKEN is not set; the Homebrew and Scoop formulas will not be updated."
+          fi
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
@@ -25,5 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # A personal access token with contents:write on the tap
-          # repositories. Without it, goreleaser skips those publishers.
+          # repositories. Without it, goreleaser skips those publishers rather
+          # than failing the release.
           TAP_TOKEN: ${{ secrets.TAP_TOKEN || secrets.GITHUB_TOKEN }}
+          SKIP_TAPS: ${{ steps.taps.outputs.skip }}

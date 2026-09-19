@@ -189,9 +189,9 @@ Benchmark
   MRR        ████████················ 0.34
 
 Per skill
-  ✓ storefront-verify          rank 1, 74% match — Verify the storefront after a theme push
-  ✓ daily-digest            rank 3, 61% match — Draft the end-of-day update
-  ✗ incident-patch            not surfaced (58 sessions of history)
+  ✓ storefront-verify   rank 1, 74% match — Verify the storefront after a theme push
+  ✓ daily-digest        rank 3, 61% match — Draft the end-of-day update
+  ✗ incident-patch      not surfaced (58 sessions of history)
 ```
 
 It is a benchmark that can fail in public, which is the only kind worth

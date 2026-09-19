@@ -171,7 +171,7 @@ export default function Home() {
           </p>
 
           <div className="mt-9 max-w-xl">
-            <CopyCommand command="brew install HarjjotSinghh/tap/ritual" />
+            <CopyCommand command="go install github.com/HarjjotSinghh/ritual/cmd/ritual@latest" />
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <Button size="lg" render={<a href="#install" />}>

@@ -129,18 +129,24 @@ you get the deterministic template, which is complete, if flatter.
 ## Install
 
 ```bash
-# Homebrew
-brew install HarjjotSinghh/tap/ritual
-
-# Go
+# Go — builds from source, needs Go 1.26+
 go install github.com/HarjjotSinghh/ritual/cmd/ritual@latest
+
+# Homebrew (macOS)
+brew install --cask HarjjotSinghh/tap/ritual
 
 # Scoop (Windows)
 scoop bucket add harjjotsinghh https://github.com/HarjjotSinghh/scoop-bucket
 scoop install ritual
 ```
 
-Or grab a binary from [releases](https://github.com/HarjjotSinghh/ritual/releases).
+Or grab a signed archive from
+[releases](https://github.com/HarjjotSinghh/ritual/releases) — macOS, Linux, and
+Windows on amd64 and arm64.
+
+> The Homebrew and Scoop entries are published by the release workflow only when
+> a `TAP_TOKEN` secret with write access to the tap repositories is configured.
+> Until then, use `go install` or the release archives.
 
 ## Use
 

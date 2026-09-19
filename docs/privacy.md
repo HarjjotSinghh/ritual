@@ -63,6 +63,11 @@ with a secret can still reach a report's evidence list.
 
 Reports are pruned to the newest twenty. The directory is 0700.
 
+On Windows those mode bits are not enforced: the filesystem has no Unix
+permissions, and what protects `%USERPROFILE%\.ritual` is the profile
+directory's own ACL. That is the same protection your agent transcripts already
+have, but it is worth knowing it is not something ritual sets.
+
 ## The dashboard
 
 `ritual ui` binds to `127.0.0.1` and requires a token generated per run and

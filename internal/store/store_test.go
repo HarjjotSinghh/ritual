@@ -3,6 +3,7 @@ package store
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -53,8 +54,14 @@ func TestSaveReportIsOwnerOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if perm := info.Mode().Perm(); perm != 0o600 {
-		t.Fatalf("report permissions = %o, want 600: reports hold real prompts", perm)
+	// Windows does not carry Unix permission bits, so the mode it reports says
+	// nothing about who can read the file. The protection there comes from the
+	// directory ACL that user profiles already have, which is out of this
+	// package's hands and documented as such.
+	if runtime.GOOS != "windows" {
+		if perm := info.Mode().Perm(); perm != 0o600 {
+			t.Fatalf("report permissions = %o, want 600: reports hold real prompts", perm)
+		}
 	}
 
 	loaded, _, err := LoadReport()

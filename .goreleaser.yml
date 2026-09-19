@@ -1,0 +1,91 @@
+version: 2
+
+project_name: ritual
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: ritual
+    main: ./cmd/ritual
+    binary: ritual
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/HarjjotSinghh/ritual/internal/version.Version={{.Version}}
+      - -X github.com/HarjjotSinghh/ritual/internal/version.Commit={{.FullCommit}}
+      - -X github.com/HarjjotSinghh/ritual/internal/version.Date={{.Date}}
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+      - docs/**/*
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-dev"
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^feat'
+      order: 0
+    - title: Fixes
+      regexp: '^fix'
+      order: 1
+    - title: Agents
+      regexp: '^(feat|fix)\(agent'
+      order: 2
+    - title: Other
+      order: 99
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+
+brews:
+  - repository:
+      owner: HarjjotSinghh
+      name: homebrew-tap
+      token: "{{ .Env.TAP_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/HarjjotSinghh/ritual
+    description: Mine your coding-agent history for the workflows you keep repeating
+    license: Apache-2.0
+    test: |
+      system "#{bin}/ritual", "version"
+
+scoops:
+  - repository:
+      owner: HarjjotSinghh
+      name: scoop-bucket
+      token: "{{ .Env.TAP_TOKEN }}"
+    homepage: https://github.com/HarjjotSinghh/ritual
+    description: Mine your coding-agent history for the workflows you keep repeating
+    license: Apache-2.0
+
+release:
+  draft: false
+  prerelease: auto
+  footer: |
+    ---
+    Everything ritual does runs on your machine. See [docs/privacy.md](https://github.com/HarjjotSinghh/ritual/blob/main/docs/privacy.md).

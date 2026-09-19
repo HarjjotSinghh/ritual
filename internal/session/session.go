@@ -100,6 +100,18 @@ func (s Session) ToolCalls() []Turn {
 	return out
 }
 
+// Append adds turns in order, assigning each one the next index.
+//
+// Finalize sorts by Index, so a caller that appends turns with the zero value
+// after an earlier Finalize would silently reorder the session. Append removes
+// that trap; adapters build through it or through their own counter.
+func (s *Session) Append(turns ...Turn) {
+	for _, t := range turns {
+		t.Index = len(s.Turns)
+		s.Turns = append(s.Turns, t)
+	}
+}
+
 // Finalize sorts turns by their recorded order, backfills timestamps that the
 // vendor left empty from the nearest neighbour, and derives Start/End. Adapters
 // call it once before handing a session back so the miner can assume ordering.

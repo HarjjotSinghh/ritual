@@ -1,0 +1,9 @@
+{"type":"ai-title","aiTitle":"Storefront verification","sessionId":"sess-1"}
+{"type":"user","promptSource":"typed","sessionId":"sess-1","cwd":"/tmp/work/storefront","gitBranch":"main","timestamp":"2026-09-01T10:00:00Z","message":{"role":"user","content":[{"type":"text","text":"Verify the storefront after the theme push"}]}}
+{"type":"assistant","sessionId":"sess-1","timestamp":"2026-09-01T10:00:05Z","message":{"role":"assistant","content":[{"type":"text","text":"Checking."},{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"shopify theme push --unpublished"}}]}}
+{"type":"user","sessionId":"sess-1","timestamp":"2026-09-01T10:00:20Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"pushed"}]}}
+{"type":"assistant","sessionId":"sess-1","timestamp":"2026-09-01T10:00:30Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Read","input":{"file_path":"/tmp/work/storefront/sections/cart.liquid"}}]}}
+{"type":"user","sessionId":"sess-1","timestamp":"2026-09-01T10:00:40Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t2","content":"error: no such file","is_error":true}]}}
+{"type":"user","promptSource":"sdk","sessionId":"sess-1","timestamp":"2026-09-01T10:01:00Z","message":{"role":"user","content":"Review this change for security vulnerabilities."}}
+{"type":"user","promptSource":"typed","isSidechain":true,"sessionId":"sess-1","timestamp":"2026-09-01T10:02:00Z","message":{"role":"user","content":"subagent prompt that must not count"}}
+not json at all

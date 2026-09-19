@@ -1,0 +1,10 @@
+{
+  "sessionId": "gem-1",
+  "startTime": "2026-09-04T07:00:00Z",
+  "cwd": "/tmp/work/site",
+  "messages": [
+    {"role": "user", "parts": [{"text": "Update the pricing copy"}], "timestamp": "2026-09-04T07:00:00Z"},
+    {"role": "model", "parts": [{"text": "Editing."}, {"functionCall": {"name": "edit_file", "args": {"file_path": "/tmp/work/site/pricing.tsx"}}}], "timestamp": "2026-09-04T07:00:10Z"},
+    {"role": "user", "parts": [{"functionResponse": {"name": "edit_file", "response": {"output": "ok"}}}], "timestamp": "2026-09-04T07:00:12Z"}
+  ]
+}

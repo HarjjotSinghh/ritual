@@ -1,0 +1,192 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono-ui);
+  --font-heading: var(--font-mono-ui);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Paper and ink. The warmth is deliberate: this is a tool for reading your
+     own history, and a cold neutral grey makes long text feel like a console
+     error rather than a page. */
+  --background: oklch(0.985 0.006 85);
+  --foreground: oklch(0.205 0.012 60);
+  --card: oklch(1 0.003 85);
+  --card-foreground: oklch(0.205 0.012 60);
+  --popover: oklch(1 0.003 85);
+  --popover-foreground: oklch(0.205 0.012 60);
+  --primary: oklch(0.44 0.108 48);
+  --primary-foreground: oklch(0.985 0.006 85);
+  --secondary: oklch(0.95 0.01 85);
+  --secondary-foreground: oklch(0.28 0.014 60);
+  --muted: oklch(0.955 0.008 85);
+  --muted-foreground: oklch(0.52 0.014 70);
+  --accent: oklch(0.93 0.022 70);
+  --accent-foreground: oklch(0.28 0.02 55);
+  --destructive: oklch(0.52 0.16 28);
+  --success: oklch(0.48 0.09 150);
+  --warning: oklch(0.56 0.1 75);
+  --border: oklch(0.9 0.012 80);
+  --input: oklch(0.9 0.012 80);
+  --ring: oklch(0.44 0.108 48);
+  --chart-1: oklch(0.44 0.108 48);
+  --chart-2: oklch(0.58 0.07 60);
+  --chart-3: oklch(0.7 0.05 70);
+  --chart-4: oklch(0.8 0.03 80);
+  --chart-5: oklch(0.88 0.02 85);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.97 0.008 85);
+  --sidebar-foreground: oklch(0.205 0.012 60);
+  --sidebar-primary: oklch(0.44 0.108 48);
+  --sidebar-primary-foreground: oklch(0.985 0.006 85);
+  --sidebar-accent: oklch(0.93 0.022 70);
+  --sidebar-accent-foreground: oklch(0.28 0.02 55);
+  --sidebar-border: oklch(0.9 0.012 80);
+  --sidebar-ring: oklch(0.44 0.108 48);
+}
+
+.dark {
+  --background: oklch(0.165 0.008 70);
+  --foreground: oklch(0.925 0.01 85);
+  --card: oklch(0.205 0.01 70);
+  --card-foreground: oklch(0.925 0.01 85);
+  --popover: oklch(0.205 0.01 70);
+  --popover-foreground: oklch(0.925 0.01 85);
+  --primary: oklch(0.78 0.1 62);
+  --primary-foreground: oklch(0.19 0.012 60);
+  --secondary: oklch(0.26 0.012 70);
+  --secondary-foreground: oklch(0.925 0.01 85);
+  --muted: oklch(0.25 0.01 70);
+  --muted-foreground: oklch(0.68 0.012 80);
+  --accent: oklch(0.29 0.022 60);
+  --accent-foreground: oklch(0.9 0.02 80);
+  --destructive: oklch(0.68 0.15 25);
+  --success: oklch(0.72 0.11 152);
+  --warning: oklch(0.78 0.11 80);
+  --border: oklch(0.99 0.01 85 / 12%);
+  --input: oklch(0.99 0.01 85 / 16%);
+  --ring: oklch(0.78 0.1 62);
+  --chart-1: oklch(0.78 0.1 62);
+  --chart-2: oklch(0.64 0.07 65);
+  --chart-3: oklch(0.5 0.05 70);
+  --chart-4: oklch(0.38 0.03 75);
+  --chart-5: oklch(0.3 0.02 80);
+  --sidebar: oklch(0.205 0.01 70);
+  --sidebar-foreground: oklch(0.925 0.01 85);
+  --sidebar-primary: oklch(0.78 0.1 62);
+  --sidebar-primary-foreground: oklch(0.19 0.012 60);
+  --sidebar-accent: oklch(0.29 0.022 60);
+  --sidebar-accent-foreground: oklch(0.9 0.02 80);
+  --sidebar-border: oklch(0.99 0.01 85 / 12%);
+  --sidebar-ring: oklch(0.78 0.1 62);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+@layer base {
+  /* The page is set in mono because the subject is a terminal tool, and reads
+     in a serif where it turns into prose, because a wall of monospace is a
+     wall. */
+  body {
+    font-family: var(--font-body), ui-serif, Georgia, serif;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, nav, code, pre, kbd, th, .ui {
+    font-family: var(--font-mono-ui), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-feature-settings: "zero" 1;
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.035em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  /* Someone reading this page has asked their system not to animate. The page
+     has almost no motion to begin with; this makes sure the little it has
+     respects that. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* One ruled edge, reused: the page is built from horizontal rules rather
+     than from cards stacked on a background. */
+  .rule {
+    border-top: 1px solid var(--border);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

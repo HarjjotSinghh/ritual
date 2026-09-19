@@ -22,3 +22,9 @@ out/
 .DS_Store
 .idea/
 *.swp
+
+# Next.js build output inside website/
+website/.next/
+website/out/
+website/node_modules/
+website/.turbo/

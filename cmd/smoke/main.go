@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/HarjjotSinghh/ritual/internal/ingest"
+	"github.com/HarjjotSinghh/ritual/internal/mine"
 )
 
 func main() {
@@ -12,26 +13,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	for _, s := range res.Stats {
-		fmt.Printf("%-10s sessions=%-5d turns=%-7d tools=%-7d %s..%s\n", s.Agent, s.Sessions, s.Turns, s.ToolCalls, s.Earliest.Format("01-02"), s.Latest.Format("01-02"))
-	}
-	fmt.Println("total sessions:", len(res.Sessions))
-	for i, w := range res.Warnings {
-		if i > 4 {
-			fmt.Println("  ...", len(res.Warnings)-5, "more warnings")
+	out := mine.Run(res.Sessions, mine.DefaultOptions())
+	fmt.Printf("arcs=%d clustered=%d candidates=%d rules=%d\n\n", out.Arcs, out.Clustered, len(out.Candidates), len(out.Rules))
+	for i, c := range out.Candidates {
+		if i >= 12 {
 			break
 		}
-		fmt.Println("  warn:", w)
+		fmt.Printf("%2d. %-52s x%-3d sess=%-3d coh=%.2f %s\n", i+1, c.Title, c.Occurrences, c.Sessions, c.Cohesion, c.Cadence.Label)
+		fmt.Printf("    %s\n", c.Summary)
+		fmt.Printf("    repos=%v agents=%v\n", c.Repos, c.Agents)
+		fmt.Printf("    tools=%v\n    phrases=%v\n    keywords=%v\n", c.Tools, c.Phrases, c.Keywords)
 	}
-	n := 0
-	for _, s := range res.Sessions {
-		if n >= 3 {
+	fmt.Println("\n--- rules")
+	for i, r := range out.Rules {
+		if i >= 8 {
 			break
 		}
-		if len(s.UserTurns()) == 0 {
-			continue
-		}
-		n++
-		fmt.Printf("\n[%s] %s | %s | turns=%d\n  prompt: %.140s\n", s.Agent, s.ID, s.Workspace, len(s.Turns), s.UserTurns()[0].Text)
+		fmt.Printf("%2d. x%-2d %s\n", i+1, r.Occurrences, r.Text)
 	}
 }

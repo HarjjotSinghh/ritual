@@ -6,6 +6,26 @@ import (
 	"strings"
 )
 
+// harnessInternal are tools that belong to the harness rather than to the
+// work: schema loaders, structured-output shims, background-task plumbing,
+// session management. They appear in thousands of transcripts, they correlate
+// with nothing a human decided, and left in they dominate every mined
+// sequence. Returning an empty verb drops the call.
+var harnessInternal = map[string]struct{}{
+	"toolsearch": {}, "structuredoutput": {}, "getdynamictools": {}, "calldynamictool": {},
+	"taskoutput": {}, "taskstop": {}, "killshell": {}, "bashoutput": {}, "monitor": {},
+	"listmcpresourcestool": {}, "readmcpresourcetool": {}, "readmcpresourcedirtool": {},
+	"listplugins": {}, "searchplugins": {}, "listskills": {}, "searchskills": {},
+	"exitplanmode": {}, "enterplanmode": {}, "exitworktree": {}, "enterworktree": {},
+	"sendmessage": {}, "listagents": {}, "reportfindings": {}, "schedulewakeup": {},
+	"todoread": {}, "attempt_completion": {}, "new_task": {},
+}
+
+// uuidish matches the opaque server identifiers some hosts assign to MCP
+// connections. They are stable within one machine and meaningless everywhere
+// else, so the function name is kept and the server identifier is dropped.
+var uuidish = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$|^[0-9a-f]{16,}$`)
+
 // Canonical maps a vendor tool name onto a shared verb. Without this, the same
 // workflow mined from Claude Code and from Codex looks like two different
 // workflows, because one calls the file reader "Read" and the other "exec" with
@@ -18,20 +38,32 @@ func Canonical(tool string) string {
 	}
 	// MCP tools keep their server so a workflow that depends on Slack or Notion
 	// is not flattened into a generic "mcp" step.
+	if strings.HasPrefix(t, "mcp__ccd_") || strings.HasPrefix(t, "mcp__claude_code") {
+		return ""
+	}
 	if strings.HasPrefix(t, "mcp__") {
 		parts := strings.SplitN(strings.TrimPrefix(t, "mcp__"), "__", 2)
-		server := sanitizeSegment(parts[0])
+		server := parts[0]
 		if len(parts) == 2 {
-			return "mcp:" + server + ":" + sanitizeSegment(parts[1])
+			if uuidish.MatchString(server) {
+				return "mcp:" + sanitizeSegment(parts[1])
+			}
+			return "mcp:" + sanitizeSegment(server) + ":" + sanitizeSegment(parts[1])
 		}
-		return "mcp:" + server
+		if uuidish.MatchString(server) {
+			return ""
+		}
+		return "mcp:" + sanitizeSegment(server)
+	}
+	if _, internal := harnessInternal[t]; internal {
+		return ""
 	}
 	switch t {
 	case "read", "read_file", "readfile", "view", "open_file", "cat", "str_replace_editor_view":
 		return "read"
 	case "write", "write_file", "create_file", "create", "new_file":
 		return "write"
-	case "edit", "apply_patch", "str_replace", "str_replace_editor", "multiedit", "multi_edit", "edit_file", "patch", "update_file", "replace":
+	case "edit", "apply_patch", "str_replace", "strreplace", "str_replace_editor", "multiedit", "multi_edit", "edit_file", "patch", "update_file", "replace", "searchreplace", "search_replace", "write_to_file", "replace_in_file":
 		return "edit"
 	case "bash", "shell", "exec", "exec_command", "run_terminal_command", "run_command", "terminal", "run", "local_shell", "container.exec", "execute_command":
 		return "shell"
@@ -45,7 +77,7 @@ func Canonical(tool string) string {
 		return "web_search"
 	case "task", "agent", "dispatch_agent", "spawn_agent", "subagent":
 		return "subagent"
-	case "todowrite", "todo_write", "todo", "update_plan", "plan":
+	case "todowrite", "todo_write", "todo", "update_plan", "plan", "updatecurrentstep", "update_current_step", "updatetodos", "update_todos", "setplan":
 		return "plan"
 	case "notebookedit", "notebook_edit":
 		return "edit"

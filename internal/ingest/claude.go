@@ -47,6 +47,15 @@ func readClaude(path string, lim Limits, red *redact.Redactor) ([]session.Sessio
 			return nil
 		}
 
+		// promptSource distinguishes what the human typed from what the
+		// harness submitted on their behalf. An SDK prompt is a programmatic
+		// review or automation run; a system prompt is a task notification.
+		// Both are user-role records, neither is a human intent, and counting
+		// them produces a "workflow" the operator never performed.
+		if role := str(raw, "promptSource"); role == "sdk" || role == "system" {
+			return nil
+		}
+
 		at := timeFrom(raw, "timestamp")
 		msg := obj(raw, "message")
 		if msg == nil {

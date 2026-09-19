@@ -26,11 +26,32 @@ var wordRE = regexp.MustCompile(`[a-z0-9][a-z0-9_\-\.]*`)
 var Stopwords = map[string]struct{}{}
 
 func init() {
+	// The list is long on purpose. Prompts written to a coding agent are
+	// conversational: they are full of hedges, connectives, and politeness that
+	// appear in every single one of them. Any term that survives here has to
+	// earn its place by being about the work.
 	for _, w := range strings.Fields(`a an the and or but if then than so because as of to in on at by for with from into over under again
-	i me my we our you your it its this that these those is are was were be been being do does did doing have has had having
-	can could should would will shall may might must not no nor just really very please thanks thank ok okay now then
-	let lets make made get got go going want need like also too still yet here there what which who whom when where why how
-	all any both each few more most other some such only own same`) {
+	i me my mine we our ours you your yours it its this that these those is are was were be been being am
+	do does did doing done have has had having can could should would will shall may might must not no nor
+	just really very please thanks thank ok okay now then still yet here there what which who whom whose when where why how
+	let lets make made get got go going want need like also too see seen say said tell told ask asked
+	all any both each few more most other some such only own same new old first last next previous
+	one two three too enough much many lot lots bit little big small
+	about after before during while until since between among through across around above below off out up down
+	again once ever never always sometimes often usually maybe perhaps probably actually basically essentially literally
+	thing things stuff way ways part parts side sides point points case cases time times
+	good bad better best worse worst nice cool great fine sure right wrong left else
+	try trying tried use used using work works working help helps helping
+	think thought know known knew feel feels look looks looking seem seems
+	whatever however therefore though although unless whether either neither
+	they them their theirs he she his her him hers who's dont doesnt didnt cant wont isnt arent
+	yes yeah yep nope hey hi hello thanks ty pls plz btw fyi aka etc eg ie
+	add adds added put puts set sets keep keeps give gives given take takes taken
+	without within apart along besides despite regardless accordingly moreover furthermore
+	continue continues continuing proceed start starts started stop stops stopped
+	currently already almost quite rather even still simply merely
+	something anything everything nothing someone anyone everyone nobody
+	instead rather otherwise meanwhile afterwards beforehand`) {
 		Stopwords[w] = struct{}{}
 	}
 }
@@ -197,6 +218,65 @@ func Shingles(seq []string, n int) []string {
 	out := make([]string, 0, len(seq)-n+1)
 	for i := 0; i+n <= len(seq); i++ {
 		out = append(out, strings.Join(seq[i:i+n], " > "))
+	}
+	return out
+}
+
+var (
+	hexRE    = regexp.MustCompile(`^[0-9a-f]{8,}$`)
+	hasDigit = regexp.MustCompile(`[0-9]`)
+	dottedRE = regexp.MustCompile(`[./]`)
+)
+
+// Meaningful reports whether a token is worth showing a human.
+//
+// Clustering benefits from identifiers — a file name shared by nine arcs is
+// real evidence that they are the same work — but a title built from
+// `included_item_1`, `83042602-1d18-408e`, or `2026-09-09` tells the reader
+// nothing. So the identifiers stay in the similarity vector and are filtered
+// out of anything that gets printed.
+func Meaningful(token string) bool {
+	switch {
+	case len(token) < 3 || len(token) > 20:
+		return false
+	case hasDigit.MatchString(token):
+		return false
+	case hexRE.MatchString(token):
+		return false
+	case dottedRE.MatchString(token):
+		return false
+	case hasRun(token, 4):
+		return false
+	}
+	return true
+}
+
+// hasRun reports whether a token contains n or more of the same rune in a row,
+// which is how base64 fragments and separator noise show up. RE2 has no
+// backreferences, so this is a scan rather than a pattern.
+func hasRun(token string, n int) bool {
+	run, prev := 1, rune(0)
+	for i, r := range token {
+		if i > 0 && r == prev {
+			run++
+			if run >= n {
+				return true
+			}
+		} else {
+			run = 1
+		}
+		prev = r
+	}
+	return false
+}
+
+// FilterMeaningful keeps only the tokens fit for display, in order.
+func FilterMeaningful(tokens []string) []string {
+	out := make([]string, 0, len(tokens))
+	for _, t := range tokens {
+		if Meaningful(t) {
+			out = append(out, t)
+		}
 	}
 	return out
 }

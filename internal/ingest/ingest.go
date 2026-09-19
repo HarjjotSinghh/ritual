@@ -64,6 +64,11 @@ type Options struct {
 	Limits Limits
 	// KeepEmails disables email redaction for a local-only run.
 	KeepEmails bool
+	// KeepUnprompted retains sessions with no human turn at all. Those are
+	// automation runs — a scheduled review, an SDK-driven agent, a resumed
+	// background task — and by default they are dropped, because a workflow
+	// nobody asked for is not a workflow anybody would want a skill for.
+	KeepUnprompted bool
 	// Progress, when set, is called as each agent's store is read.
 	Progress func(agent string, files, done int)
 }
@@ -167,6 +172,9 @@ func Scan(opts Options) (*Result, error) {
 					continue
 				}
 				if opts.Workspace != "" && !strings.Contains(strings.ToLower(s.Workspace), strings.ToLower(opts.Workspace)) {
+					continue
+				}
+				if !opts.KeepUnprompted && len(s.UserTurns()) == 0 {
 					continue
 				}
 				stats.Sessions++

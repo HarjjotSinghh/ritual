@@ -11,6 +11,8 @@ it into skills, rules, commands, and hooks.
 [![Go Reference](https://pkg.go.dev/badge/github.com/HarjjotSinghh/ritual.svg)](https://pkg.go.dev/github.com/HarjjotSinghh/ritual)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
+[ritual-harjjot.vercel.app](https://ritual-harjjot.vercel.app)
+
 </div>
 
 ---

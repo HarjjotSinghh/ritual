@@ -18,7 +18,7 @@ const description =
   "ritual reads the session history your coding agents already write to disk, finds the work you repeat, and turns it into skills, rules, commands, and hooks. Local-first: nothing is uploaded.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ritual.dev"),
+  metadataBase: new URL("https://ritual-harjjot.vercel.app"),
   title: {
     default: "ritual — cross-agent process mining for developers",
     template: "%s — ritual",

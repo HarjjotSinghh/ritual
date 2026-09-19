@@ -226,8 +226,9 @@ Every stage is deterministic: the same history always produces the same report,
 because a suggestion you cannot reproduce is a suggestion you cannot argue with.
 No model is involved in deciding what a workflow is.
 
-Details in [docs/architecture.md](docs/architecture.md), and the scoring model
-— every weight and every penalty — in [docs/scoring.md](docs/scoring.md).
+Details in [docs/architecture.md](docs/architecture.md), the scoring model —
+every weight and every penalty — in [docs/scoring.md](docs/scoring.md), and the
+full flag reference in [docs/commands.md](docs/commands.md).
 
 ## Configuration
 

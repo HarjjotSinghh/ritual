@@ -1,0 +1,31 @@
+name: Bug
+description: Something behaved incorrectly
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `ritual doctor`
+      description: Paths are already redacted to ${HOME}. Read it before pasting anyway.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version and platform
+      placeholder: "ritual v0.1.0, macOS 15.2 arm64"
+    validations:
+      required: true

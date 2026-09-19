@@ -1,0 +1,33 @@
+name: Finding quality
+description: A suggestion was wrong, misnamed, or should not have been made
+labels: [mining]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most useful kind of report and the hardest to act on
+        without evidence. `ritual show <id>` prints everything behind a
+        finding; redact what you must and paste the rest.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What went wrong
+      options:
+        - A real workflow was missed entirely
+        - A finding grouped unrelated work together
+        - The verdict was wrong (skill vs rule vs command vs hook)
+        - The title or description was unusable
+        - It proposed something I already have
+    validations:
+      required: true
+  - type: textarea
+    id: show
+    attributes:
+      label: Output of `ritual show <id>`
+      render: shell
+  - type: textarea
+    id: expected
+    attributes:
+      label: What it should have said
+    validations:
+      required: true

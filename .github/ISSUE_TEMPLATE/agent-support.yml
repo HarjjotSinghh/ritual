@@ -1,0 +1,37 @@
+name: Agent support
+description: ritual cannot read an agent's history, or reads it wrongly
+labels: [agent]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not paste a real transcript. It will contain paths, project
+        names, and quite possibly a token. A hand-written six-line example of
+        the record shape is more useful and costs you nothing.
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and version
+      placeholder: "Windsurf 1.4.2"
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Where it keeps sessions
+      placeholder: "~/.windsurf/sessions/<id>/messages.jsonl"
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Record shape
+      description: A few hand-written lines showing the fields, not a real session.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What `ritual agents` prints
+      render: shell

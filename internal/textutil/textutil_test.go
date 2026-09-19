@@ -16,7 +16,7 @@ func TestTokensDropsStopwordsAndNoise(t *testing.T) {
 func TestMeaningfulRejectsIdentifiers(t *testing.T) {
 	cases := map[string]bool{
 		"checkout":                             true,
-		"storefront-verify":                       true,
+		"storefront-verify":                    true,
 		"2026-09-09":                           false,
 		"83042602":                             false,
 		"deadbeefdeadbeef":                     false,

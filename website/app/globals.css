@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-body);
+  --font-sans: var(--font-sans-ui);
   --font-mono: var(--font-mono-ui);
-  --font-heading: var(--font-mono-ui);
+  --font-heading: var(--font-sans-ui);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -41,152 +41,478 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 3);
+  --radius-4xl: calc(var(--radius) * 4);
 }
 
+/* One achromatic ramp and one accent. The subject is a tool that reads plain
+   text off a disk, so the page is ink on paper with a single blue reserved for
+   things you can act on: links, the primary action, an active tab. Nothing
+   else in the design is allowed to be coloured. */
 :root {
-  /* Paper and ink. The warmth is deliberate: this is a tool for reading your
-     own history, and a cold neutral grey makes long text feel like a console
-     error rather than a page. */
-  --background: oklch(0.985 0.006 85);
-  --foreground: oklch(0.205 0.012 60);
-  --card: oklch(1 0.003 85);
-  --card-foreground: oklch(0.205 0.012 60);
-  --popover: oklch(1 0.003 85);
-  --popover-foreground: oklch(0.205 0.012 60);
-  --primary: oklch(0.44 0.108 48);
-  --primary-foreground: oklch(0.985 0.006 85);
-  --secondary: oklch(0.95 0.01 85);
-  --secondary-foreground: oklch(0.28 0.014 60);
-  --muted: oklch(0.955 0.008 85);
-  --muted-foreground: oklch(0.52 0.014 70);
-  --accent: oklch(0.93 0.022 70);
-  --accent-foreground: oklch(0.28 0.02 55);
-  --destructive: oklch(0.52 0.16 28);
-  --success: oklch(0.48 0.09 150);
-  --warning: oklch(0.56 0.1 75);
-  --border: oklch(0.9 0.012 80);
-  --input: oklch(0.9 0.012 80);
-  --ring: oklch(0.44 0.108 48);
-  --chart-1: oklch(0.44 0.108 48);
-  --chart-2: oklch(0.58 0.07 60);
-  --chart-3: oklch(0.7 0.05 70);
-  --chart-4: oklch(0.8 0.03 80);
-  --chart-5: oklch(0.88 0.02 85);
-  --radius: 0.5rem;
-  --sidebar: oklch(0.97 0.008 85);
-  --sidebar-foreground: oklch(0.205 0.012 60);
-  --sidebar-primary: oklch(0.44 0.108 48);
-  --sidebar-primary-foreground: oklch(0.985 0.006 85);
-  --sidebar-accent: oklch(0.93 0.022 70);
-  --sidebar-accent-foreground: oklch(0.28 0.02 55);
-  --sidebar-border: oklch(0.9 0.012 80);
-  --sidebar-ring: oklch(0.44 0.108 48);
+  --background: oklch(0.992 0.001 265);
+  --foreground: oklch(0.175 0.006 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.175 0.006 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.175 0.006 265);
+  --primary: oklch(0.52 0.17 258);
+  --primary-foreground: oklch(0.99 0.002 258);
+  --secondary: oklch(0.965 0.002 265);
+  --secondary-foreground: oklch(0.24 0.006 265);
+  --muted: oklch(0.97 0.002 265);
+  --muted-foreground: oklch(0.505 0.008 265);
+  --accent: oklch(0.955 0.008 258);
+  --accent-foreground: oklch(0.32 0.05 258);
+  --destructive: oklch(0.545 0.19 27);
+  --success: oklch(0.52 0.12 152);
+  --warning: oklch(0.58 0.11 72);
+  --border: oklch(0.915 0.003 265);
+  --input: oklch(0.915 0.003 265);
+  --ring: oklch(0.52 0.17 258);
+  --chart-1: oklch(0.52 0.17 258);
+  --chart-2: oklch(0.62 0.12 258);
+  --chart-3: oklch(0.72 0.08 258);
+  --chart-4: oklch(0.82 0.04 258);
+  --chart-5: oklch(0.9 0.02 258);
+  --radius: 0.25rem;
+  --sidebar: oklch(0.982 0.001 265);
+  --sidebar-foreground: oklch(0.175 0.006 265);
+  --sidebar-primary: oklch(0.52 0.17 258);
+  --sidebar-primary-foreground: oklch(0.99 0.002 258);
+  --sidebar-accent: oklch(0.955 0.008 258);
+  --sidebar-accent-foreground: oklch(0.32 0.05 258);
+  --sidebar-border: oklch(0.915 0.003 265);
+  --sidebar-ring: oklch(0.52 0.17 258);
+
+  /* The page is drawn out of ruled lines rather than stacked cards, so the
+     hairline is a token in its own right and every rule on the page reads it. */
+  --hairline: oklch(0.915 0.003 265);
+  --hatch: oklch(0.915 0.003 265 / 55%);
+
+  /* Motion scale. The hover and state values stay small, because those fire
+     dozens of times an hour; the reveal values are allowed to be slower,
+     because each one happens once. Sourced from transitions.dev. */
+  --dur-fast: 90ms;
+  --dur: 150ms;
+  --dur-slow: 250ms;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* The ruled column. Every hairline, the hatch and the crop-mark breakpoint
+     are derived from this one number, so the page narrows from one edit. */
+  --shell-max: 62.4rem;
 }
 
 .dark {
-  --background: oklch(0.165 0.008 70);
-  --foreground: oklch(0.925 0.01 85);
-  --card: oklch(0.205 0.01 70);
-  --card-foreground: oklch(0.925 0.01 85);
-  --popover: oklch(0.205 0.01 70);
-  --popover-foreground: oklch(0.925 0.01 85);
-  --primary: oklch(0.78 0.1 62);
-  --primary-foreground: oklch(0.19 0.012 60);
-  --secondary: oklch(0.26 0.012 70);
-  --secondary-foreground: oklch(0.925 0.01 85);
-  --muted: oklch(0.25 0.01 70);
-  --muted-foreground: oklch(0.68 0.012 80);
-  --accent: oklch(0.29 0.022 60);
-  --accent-foreground: oklch(0.9 0.02 80);
-  --destructive: oklch(0.68 0.15 25);
-  --success: oklch(0.72 0.11 152);
-  --warning: oklch(0.78 0.11 80);
-  --border: oklch(0.99 0.01 85 / 12%);
-  --input: oklch(0.99 0.01 85 / 16%);
-  --ring: oklch(0.78 0.1 62);
-  --chart-1: oklch(0.78 0.1 62);
-  --chart-2: oklch(0.64 0.07 65);
-  --chart-3: oklch(0.5 0.05 70);
-  --chart-4: oklch(0.38 0.03 75);
-  --chart-5: oklch(0.3 0.02 80);
-  --sidebar: oklch(0.205 0.01 70);
-  --sidebar-foreground: oklch(0.925 0.01 85);
-  --sidebar-primary: oklch(0.78 0.1 62);
-  --sidebar-primary-foreground: oklch(0.19 0.012 60);
-  --sidebar-accent: oklch(0.29 0.022 60);
-  --sidebar-accent-foreground: oklch(0.9 0.02 80);
-  --sidebar-border: oklch(0.99 0.01 85 / 12%);
-  --sidebar-ring: oklch(0.78 0.1 62);
+  --background: oklch(0.155 0.004 265);
+  --foreground: oklch(0.93 0.004 265);
+  --card: oklch(0.185 0.005 265);
+  --card-foreground: oklch(0.93 0.004 265);
+  --popover: oklch(0.185 0.005 265);
+  --popover-foreground: oklch(0.93 0.004 265);
+  --primary: oklch(0.72 0.145 258);
+  --primary-foreground: oklch(0.16 0.025 258);
+  --secondary: oklch(0.235 0.006 265);
+  --secondary-foreground: oklch(0.93 0.004 265);
+  --muted: oklch(0.225 0.006 265);
+  --muted-foreground: oklch(0.66 0.009 265);
+  --accent: oklch(0.26 0.025 258);
+  --accent-foreground: oklch(0.86 0.05 258);
+  --destructive: oklch(0.68 0.17 25);
+  --success: oklch(0.74 0.13 155);
+  --warning: oklch(0.78 0.12 78);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.72 0.145 258);
+  --chart-1: oklch(0.72 0.145 258);
+  --chart-2: oklch(0.6 0.11 258);
+  --chart-3: oklch(0.48 0.08 258);
+  --chart-4: oklch(0.36 0.05 258);
+  --chart-5: oklch(0.28 0.03 258);
+  --sidebar: oklch(0.185 0.005 265);
+  --sidebar-foreground: oklch(0.93 0.004 265);
+  --sidebar-primary: oklch(0.72 0.145 258);
+  --sidebar-primary-foreground: oklch(0.16 0.025 258);
+  --sidebar-accent: oklch(0.26 0.025 258);
+  --sidebar-accent-foreground: oklch(0.86 0.05 258);
+  --sidebar-border: oklch(1 0 0 / 11%);
+  --sidebar-ring: oklch(0.72 0.145 258);
+
+  --hairline: oklch(1 0 0 / 11%);
+  --hatch: oklch(1 0 0 / 7%);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
   }
-}
-@layer base {
-  /* The page is set in mono because the subject is a terminal tool, and reads
-     in a serif where it turns into prose, because a wall of monospace is a
-     wall. */
+
   body {
-    font-family: var(--font-body), ui-serif, Georgia, serif;
-    font-size: 1.0625rem;
-    line-height: 1.65;
+    @apply bg-background text-foreground;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, h4, nav, code, pre, kbd, th, .ui {
-    font-family: var(--font-mono-ui), ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-feature-settings: "zero" 1;
-  }
-
-  h1, h2, h3 {
-    letter-spacing: -0.035em;
-    font-weight: 600;
+  /* Headings balance so a two-line title never leaves one orphaned word;
+     everything else wraps pretty so the last line is never a single word. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    letter-spacing: -0.028em;
+    font-weight: 500;
     text-wrap: balance;
   }
 
-  p {
+  /* Short labelling text balances too, but keeps its own type: tightening the
+     tracking on a monospace command list would undo the alignment it relies
+     on. */
+  summary,
+  figcaption,
+  th {
+    text-wrap: balance;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  p,
+  li,
+  dd,
+  td,
+  blockquote {
     text-wrap: pretty;
   }
 
-  ::selection {
-    background: var(--accent);
-    color: var(--accent-foreground);
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono-ui), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-feature-settings: "zero" 1, "ss03" 1;
   }
 
-  /* Someone reading this page has asked their system not to animate. The page
-     has almost no motion to begin with; this makes sure the little it has
-     respects that. */
+  ::selection {
+    background: var(--foreground);
+    color: var(--background);
+  }
+
+  /* The page has very little motion to begin with. This makes sure the little
+     it has disappears entirely when asked. */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 }
 
 @layer components {
-  /* One ruled edge, reused: the page is built from horizontal rules rather
-     than from cards stacked on a background. */
-  .rule {
-    border-top: 1px solid var(--border);
+  /* The whole page hangs off one ruled column. The two vertical hairlines are
+     the container edge, not decoration: every section, the nav and the footer
+     terminate on them, which is what makes a page built from plain type read
+     as a drawing rather than a stack of boxes. */
+  .shell {
+    --gutter: 1.25rem;
+    width: 100%;
+    max-width: var(--shell-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    position: relative;
+  }
+
+  @media (min-width: 768px) {
+    .shell {
+      --gutter: 2.5rem;
+    }
+  }
+
+  .shell-rules {
+    position: fixed;
+    inset-block: 0;
+    inset-inline: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+  }
+
+  .shell-rules::before,
+  .shell-rules::after {
+    content: "";
+    width: var(--shell-max);
+    max-width: 100%;
+    border-inline: 1px solid var(--hairline);
+    position: absolute;
+    inset-block: 0;
+  }
+
+  /* A diagonal hatch outside the column, so the page edge reads as margin
+     rather than as more page. It is the only texture in the design. */
+  .shell-rules::after {
+    content: "";
+    inset-inline: 0;
+    border: 0;
+    width: 100%;
+    background:
+      repeating-linear-gradient(
+          45deg,
+          var(--hatch) 0 1px,
+          transparent 1px 7px
+        )
+        left / calc(50% - var(--shell-max) / 2) 100% no-repeat,
+      repeating-linear-gradient(45deg, var(--hatch) 0 1px, transparent 1px 7px)
+        right / calc(50% - var(--shell-max) / 2) 100% no-repeat;
+    opacity: 0.6;
+  }
+
+  /* One ruled edge, reused. Sections are separated by a rule that runs the full
+     width of the column, and the crop mark sits where that rule meets it. */
+  .rule-t {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .rule-b {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .crop {
+    position: relative;
+  }
+
+  /* The marks hang 4px outside the column, so they only exist once the
+     viewport is wide enough to have a margin for them to hang into. Below
+     that the column is the screen and they would push the page sideways. */
+  @media (min-width: 66rem) {
+    .crop::before,
+    .crop::after {
+      content: "";
+      position: absolute;
+      top: -4px;
+      width: 9px;
+      height: 9px;
+      background:
+        linear-gradient(var(--hairline), var(--hairline)) center / 100% 1px
+          no-repeat,
+        linear-gradient(var(--hairline), var(--hairline)) center / 1px 100%
+          no-repeat;
+    }
+  }
+
+  /* The marks sit on the column edge. `.crop` goes on the ruled box itself, so
+     the rule it marks ends where the vertical hairlines are rather than
+     running out into the hatched margin. */
+  .crop::before {
+    left: -4px;
+  }
+
+  .crop::after {
+    right: -4px;
+  }
+
+  /* Small uppercase mono, used for column headers, verdict kinds and anything
+     that names a machine concept rather than speaking to a reader. */
+  .label {
+    font-family: var(--font-mono-ui), ui-monospace, SFMono-Regular, Menlo,
+      monospace;
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .mono {
+    font-family: var(--font-mono-ui), ui-monospace, SFMono-Regular, Menlo,
+      monospace;
+    font-feature-settings: "zero" 1, "ss03" 1;
   }
 
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Links inside prose. The underline is the affordance, the colour only
+     confirms it, so the link survives a greyscale print or a colour-blind
+     reader. */
+  .prose-link {
+    color: var(--foreground);
+    text-decoration: underline;
+    text-decoration-color: var(--hairline);
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color var(--dur) var(--ease);
+  }
+
+  .prose-link:hover {
+    text-decoration-color: var(--primary);
+  }
+
+  /* A caret, because the subject is a terminal. It is the one thing on the
+     page that loops, and it loops for the same reason a real prompt does. */
+  .caret {
+    display: inline-block;
+    width: 0.5em;
+    height: 1.05em;
+    vertical-align: -0.18em;
+    background: currentColor;
+  }
+
+  /* An underline that grows from the start edge on hover, so a nav item
+     acknowledges the pointer without moving the text it sits under. */
+  .link-underline {
+    position: relative;
+  }
+
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -3px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-slow) var(--ease-smooth-out);
+  }
+
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after {
+    transform: scaleX(1);
+  }
+}
+
+/* ── Motion ────────────────────────────────────────────────────────────────
+   Two jobs only: mark that a new section has arrived (scroll reveal), and
+   show that something is live (the caret and the scroll line). Everything
+   else on the page is a hover state, which is a transition rather than an
+   animation, and none of those exceeds 250ms.
+
+   Nothing animates above the fold. The hero is the LCP element, so it paints
+   at its final position with no opacity or filter work on the critical path. */
+@layer utilities {
+  /* Small on purpose. 8px and a 2px blur is enough to read as arrival at a
+     glance without the element visibly travelling. */
+  @keyframes reveal-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes caret-blink {
+    0%,
+    45% {
+      opacity: 1;
+    }
+    50%,
+    95% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes progress-grow {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .caret {
+      animation: caret-blink 1.05s steps(1) infinite;
+    }
+  }
+
+  /* Scroll-driven, so there is no observer, no hydration cost and no JS on
+     the critical path. Browsers without `animation-timeline` never get the
+     hidden start state, which is why the whole block sits inside @supports
+     rather than being guarded after it.
+
+     A view() animation is scroll-linked rather than clock-linked, so its
+     "duration" is the scroll distance in `animation-range`. 18% of the entry
+     phase is roughly a fifth of a viewport of scrolling: at any normal wheel
+     or trackpad speed that resolves well inside 300ms. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      /* All three properties stay in one block. The `animation` shorthand
+         resets `animation-timeline` and `animation-range`, so splitting the
+         range into its own rule leaves the timeline unbound and every element
+         stuck at its unanimated style.
+
+         The window opens once the element is genuinely on screen and closes
+         30% of its own entry later. On a 160px card that is about 50px of
+         scroll, which lands well inside 300ms at any normal wheel speed. */
+      .reveal {
+        animation: reveal-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 8% entry 38%;
+      }
+
+      /* Children of a staggered group start a little further into their own
+         entry, which reads as a sweep across a row rather than one block
+         appearing at once. The offset is deliberately tiny so the last item
+         in a six-card grid is not left behind the first. */
+      .reveal-item {
+        animation: reveal-rise linear both;
+        animation-timeline: view();
+        animation-range: entry calc(8% + var(--i, 0) * 4%) entry
+          calc(38% + var(--i, 0) * 4%);
+      }
+    }
+
+    @supports (animation-timeline: scroll()) {
+      @media (prefers-reduced-motion: no-preference) {
+        .scroll-progress {
+          transform-origin: left center;
+          animation: progress-grow linear both;
+          animation-timeline: scroll(root block);
+        }
+      }
+    }
+  }
+
+  /* The global reduce block zeroes durations, which is the wrong cure for a
+     scroll-driven animation: its duration is the scroll range, so zeroing it
+     can strand an element at its start frame. These are switched off. */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal-item,
+    .caret,
+    .scroll-progress {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
+    }
   }
 }

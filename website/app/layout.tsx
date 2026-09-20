@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Newsreader } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const mono = JetBrains_Mono({
-  variable: "--font-mono-ui",
+const sans = Geist({
+  variable: "--font-sans-ui",
   subsets: ["latin"],
   display: "swap",
 });
 
-const serif = Newsreader({
-  variable: "--font-body",
+const mono = Geist_Mono({
+  variable: "--font-mono-ui",
   subsets: ["latin"],
   display: "swap",
 });
@@ -20,8 +20,8 @@ const description =
 export const metadata: Metadata = {
   metadataBase: new URL("https://ritual-harjjot.vercel.app"),
   title: {
-    default: "ritual — cross-agent process mining for developers",
-    template: "%s — ritual",
+    default: "ritual - cross-agent process mining for developers",
+    template: "%s - ritual",
   },
   description,
   keywords: [
@@ -34,16 +34,18 @@ export const metadata: Metadata = {
     "developer workflows",
     "SKILL.md",
   ],
-  authors: [{ name: "Harjot Singh Rana", url: "https://github.com/HarjjotSinghh" }],
+  authors: [
+    { name: "Harjot Singh Rana", url: "https://github.com/HarjjotSinghh" },
+  ],
   openGraph: {
     type: "website",
-    title: "ritual — cross-agent process mining for developers",
+    title: "ritual - cross-agent process mining for developers",
     description,
     siteName: "ritual",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ritual — cross-agent process mining for developers",
+    title: "ritual - cross-agent process mining for developers",
     description,
   },
   robots: { index: true, follow: true },
@@ -67,12 +69,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${mono.variable} ${serif.variable} h-full antialiased`}
+      className={`${sans.variable} ${mono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {/* The ruled column the whole page hangs off. Fixed, behind everything,
+            never interactive. */}
+        <div aria-hidden className="shell-rules" />
+        <div className="relative z-1 flex min-h-full flex-1 flex-col">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }

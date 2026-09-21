@@ -35,8 +35,8 @@ const (
 	LayoutGrokSession Layout = "grok-session"
 	// LayoutQwenJSONL is ~/.qwen/projects/<slug>/chats/*.jsonl.
 	LayoutQwenJSONL Layout = "qwen-jsonl"
-	// LayoutKimiState is ~/.kimi-code/sessions/<workspace>/<id>/state.json.
-	LayoutKimiState Layout = "kimi-state"
+	// LayoutKimiWire is ~/.kimi-code/sessions/<workspace>/<id>/agents/<agent>/wire.jsonl.
+	LayoutKimiWire Layout = "kimi-wire"
 	// LayoutCopilotEvents is ~/.copilot/session-state/<id>/events.jsonl.
 	LayoutCopilotEvents Layout = "copilot-events"
 	// LayoutClineTask is ~/.cline/tasks/<id>/api_conversation_history.json.
@@ -143,8 +143,9 @@ func Catalog() []Spec {
 			Key: "kimi", DisplayName: "Kimi Code", Vendor: "Moonshot AI",
 			RootEnv: "KIMI_CODE_HOME",
 			Roots:   []string{j(".kimi-code"), j(".kimi")},
-			Marker:  "sessions", Glob: "sessions/**/state.json", Layout: LayoutKimiState,
+			Marker:  "sessions", Glob: "sessions/**/wire.jsonl", Layout: LayoutKimiWire,
 			Excluded: []string{"auth.json", "cache"},
+			Note:     "state.json beside the transcript is a status record with no messages in it; the conversation is in agents/*/wire.jsonl.",
 		},
 		{
 			Key: "copilot", DisplayName: "GitHub Copilot CLI", Vendor: "GitHub",

@@ -107,9 +107,14 @@ What ritual can and cannot see: its own directory, config, each agent's store,
 which agent CLIs are available for authoring, and the warnings from the last
 scan.
 
-Per agent it prints `N files → M sessions parsed`. `M` far below `N` is normal
-and explained inline. `M` of zero against a non-zero `N` is a bug in the reader
-or the layout, is marked in red, and is worth reporting.
+Per agent it prints `N files → M parsed → K in scan`, and the three numbers
+answer different questions. `M` far below `N` is normal: subagent transcripts
+are read as part of their parent. `K` below `M` means the sessions parsed and
+were then filtered out — no human turn, or outside the window — and
+`--days 0 --include-automated` will include them.
+
+`M` of zero against a non-zero `N` is the only alarming case: the reader or the
+layout is wrong. It is marked in red and worth reporting.
 
 ## `ritual eval`
 

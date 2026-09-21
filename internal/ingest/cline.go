@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/HarjjotSinghh/ritual/internal/redact"
@@ -31,10 +32,14 @@ func readCline(path string, lim Limits, red *redact.Redactor) ([]session.Session
 	s := session.Session{Source: path, ID: filepath.Base(dir)}
 	b := newTurnBuilder(lim, red)
 
-	start := clineStart(filepath.Join(dir, "ui_messages.json"))
+	// Timing and the working directory live in the sibling record, not in the
+	// message file and not in a ui_messages.json, which this layout does not
+	// have at all.
+	start, workspace := clineMeta(path)
 	if start.IsZero() {
 		start = fileTime(path)
 	}
+	s.Workspace = workspace
 
 	for _, raw := range messages {
 		if s.Workspace == "" {
@@ -49,12 +54,19 @@ func readCline(path string, lim Limits, red *redact.Redactor) ([]session.Session
 	return []session.Session{s}, nil
 }
 
-// clineStart reads the first UI message's timestamp, which is when the human
-// opened the task.
-func clineStart(uiPath string) time.Time {
-	var ui []map[string]any
-	if err := readJSONFile(uiPath, &ui); err != nil || len(ui) == 0 {
-		return time.Time{}
+// clineMeta reads the session record beside the message file: <id>.json next
+// to <id>.messages.json. It carries ISO start and end times and the workspace
+// root, none of which the message array records.
+func clineMeta(messagesPath string) (time.Time, string) {
+	base := strings.TrimSuffix(messagesPath, ".messages.json")
+	var doc map[string]any
+	if err := readJSONFile(base+".json", &doc); err != nil || doc == nil {
+		return time.Time{}, ""
 	}
-	return timeFrom(ui[0], "ts", "timestamp", "time")
+	start := timeFrom(doc, "started_at", "startedAt", "time_created", "createdAt", "ts")
+	workspace := str(doc, "workspace_root", "workspaceRoot", "cwd", "directory")
+	if workspace == "" {
+		workspace = workspaceFrom(doc)
+	}
+	return start, workspace
 }

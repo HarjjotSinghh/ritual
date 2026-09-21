@@ -19,7 +19,14 @@ import (
 func readGemini(path string, lim Limits, red *redact.Redactor) ([]session.Session, error) {
 	var doc map[string]any
 	if err := readJSONFile(path, &doc); err != nil {
-		return nil, err
+		// A session killed mid-write leaves an unterminated document. Losing
+		// the whole file over its last record is the wrong trade, so the
+		// records that did land are recovered line by line.
+		recovered, lineErr := recoverJSONLines(path)
+		if lineErr != nil || len(recovered) == 0 {
+			return nil, err
+		}
+		doc = map[string]any{"messages": recovered}
 	}
 	s := session.Session{Source: path}
 	b := newTurnBuilder(lim, red)

@@ -65,21 +65,16 @@ func appendGenericMessage(b *turnBuilder, raw map[string]any, lim Limits, red *r
 
 // genericText pulls prose out of whichever field the vendor used.
 func genericText(raw map[string]any) string {
-	if parts := arr(raw, "parts"); parts != nil {
-		var sb strings.Builder
-		for _, p := range parts {
-			part, ok := p.(map[string]any)
-			if !ok {
-				continue
-			}
-			if t := str(part, "text"); t != "" {
-				sb.WriteString(t)
-				sb.WriteString("\n")
-			}
+	// Qwen nests the Gemini parts array one level down, under message. Reading
+	// only the top level parsed its roles correctly and its text not at all,
+	// which yielded sessions with zero turns that were then dropped as empty.
+	if msg := obj(raw, "message"); msg != nil {
+		if inner := partsText(msg); inner != "" {
+			return inner
 		}
-		if s := strings.TrimSpace(sb.String()); s != "" {
-			return s
-		}
+	}
+	if s := partsText(raw); s != "" {
+		return s
 	}
 	if v, ok := raw["content"]; ok {
 		if s := textFromContent(v); s != "" {
@@ -97,10 +92,39 @@ func genericText(raw map[string]any) string {
 	return str(raw, "text", "prompt", "value", "output")
 }
 
+// partsText renders a Gemini-style parts array.
+func partsText(raw map[string]any) string {
+	if parts := arr(raw, "parts"); parts != nil {
+		var sb strings.Builder
+		for _, p := range parts {
+			part, ok := p.(map[string]any)
+			if !ok {
+				continue
+			}
+			if t := str(part, "text"); t != "" {
+				sb.WriteString(t)
+				sb.WriteString("\n")
+			}
+		}
+		return strings.TrimSpace(sb.String())
+	}
+	return ""
+}
+
 // appendGenericTools handles the three tool encodings these agents use: the
 // Gemini `parts[].functionCall`, the OpenAI `tool_calls[]`, and a flat
 // `toolCalls[]` of {name, args}.
 func appendGenericTools(b *turnBuilder, raw map[string]any, lim Limits, red *redact.Redactor, at time.Time) {
+	// Tools nest exactly where text does. One level only: a record that
+	// contained itself would otherwise recurse forever.
+	if msg := obj(raw, "message"); msg != nil {
+		appendToolParts(b, msg, lim, red, at)
+	}
+	appendToolParts(b, raw, lim, red, at)
+}
+
+// appendToolParts reads the three tool encodings out of one record level.
+func appendToolParts(b *turnBuilder, raw map[string]any, lim Limits, red *redact.Redactor, at time.Time) {
 	for _, p := range arr(raw, "parts") {
 		part, ok := p.(map[string]any)
 		if !ok {

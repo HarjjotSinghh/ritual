@@ -75,12 +75,17 @@ type Options struct {
 
 // Result is one scan.
 type Result struct {
-	Sessions []session.Session       `json:"sessions"`
-	Stats    []session.Stats         `json:"stats"`
-	Warnings []string                `json:"warnings,omitempty"`
-	Roots    map[string]string       `json:"roots,omitempty"`
-	Skipped  map[string]int          `json:"skipped,omitempty"`
-	Spans    map[string][2]time.Time `json:"-"`
+	Sessions []session.Session `json:"sessions"`
+	Stats    []session.Stats   `json:"stats"`
+	Warnings []string          `json:"warnings,omitempty"`
+	Roots    map[string]string `json:"roots,omitempty"`
+	Skipped  map[string]int    `json:"skipped,omitempty"`
+	// Parsed counts sessions each reader produced, before the time, workspace,
+	// and automation filters ran. Reported separately so a diagnostic can tell
+	// "the reader failed" from "the reader worked and the filters excluded it",
+	// which look identical in the final counts and have opposite fixes.
+	Parsed map[string]int          `json:"parsed,omitempty"`
+	Spans  map[string][2]time.Time `json:"-"`
 }
 
 type reader func(path string, lim Limits, red *redact.Redactor) ([]session.Session, error)
@@ -101,7 +106,7 @@ func readerFor(layout agentspec.Layout) reader {
 		return readGrok
 	case agentspec.LayoutQwenJSONL:
 		return readQwen
-	case agentspec.LayoutKimiState:
+	case agentspec.LayoutKimiWire:
 		return readKimi
 	case agentspec.LayoutCopilotEvents:
 		return readCopilot
@@ -129,6 +134,7 @@ func Scan(opts Options) (*Result, error) {
 	res := &Result{
 		Roots:   make(map[string]string, len(discoveries)),
 		Skipped: make(map[string]int, len(discoveries)),
+		Parsed:  make(map[string]int, len(discoveries)),
 	}
 
 	for _, d := range discoveries {
@@ -160,6 +166,7 @@ func Scan(opts Options) (*Result, error) {
 			}
 			for _, s := range sessions {
 				s.Agent = d.Spec.Key
+				res.Parsed[d.Spec.Key]++
 				s.Source = redact.Path(s.Source)
 				if s.Source == "" {
 					s.Source = redact.Path(path)
@@ -506,4 +513,20 @@ func errorFromResult(m map[string]any, text string) bool {
 		}
 	}
 	return false
+}
+
+// recoverJSONLines salvages the records from a document that failed to parse as
+// a whole, by reading it as one JSON value per line. It returns nothing when
+// the file is not line-oriented, so a genuinely corrupt document still fails
+// loudly rather than being silently half-read.
+func recoverJSONLines(path string) ([]any, error) {
+	out := make([]any, 0, 32)
+	err := scanJSONL(path, func(raw map[string]any) error {
+		out = append(out, raw)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }

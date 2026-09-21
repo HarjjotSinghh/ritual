@@ -296,12 +296,14 @@ func newDoctorCmd() *cobra.Command {
 			// One scan, cross-referenced against the file counts. An agent
 			// whose files all parse to nothing used to print a tick, which is
 			// the failure mode hardest to notice and most worth reporting.
+			kept := map[string]int{}
 			parsed := map[string]int{}
 			scan, scanErr := ingest.Scan(ingest.Options{Limits: ingest.DefaultLimits()})
 			if scanErr == nil {
 				for _, st := range scan.Stats {
-					parsed[st.Agent] = st.Sessions
+					kept[st.Agent] = st.Sessions
 				}
+				parsed = scan.Parsed
 			}
 
 			fmt.Fprintf(w, "\n%s\n", Bold("Agents"))
@@ -315,23 +317,27 @@ func newDoctorCmd() *cobra.Command {
 					continue
 				default:
 					installed++
-					files, sessions := len(d.Files), parsed[spec.Key]
+					files, read, used := len(d.Files), parsed[spec.Key], kept[spec.Key]
 					mark := Green("✓")
 					switch {
 					case files == 0:
 						mark = Yellow("!")
-					case sessions == 0:
+					case read == 0:
+						// Nothing came out of the reader at all. That is a bug
+						// in ritual, and the only case worth alarming about.
 						mark = Red("✗")
+					case used == 0:
+						mark = Yellow("!")
 					}
-					fmt.Fprintf(w, "  %s %-10s %d files → %d sessions parsed%s\n",
-						mark, spec.Key, files, sessions, skippedNote(d.Skipped))
+					fmt.Fprintf(w, "  %s %-10s %d files → %d parsed → %d in scan%s\n",
+						mark, spec.Key, files, read, used, skippedNote(d.Skipped))
 					switch {
-					case files > 0 && sessions == 0:
+					case files > 0 && read == 0:
 						fmt.Fprintf(w, "      %s\n", Red("every file parsed to nothing — the reader or the layout is wrong; please report this"))
-					case files > 0 && sessions*3 < files:
-						// A large gap is usually correct rather than alarming,
-						// and saying so is cheaper than fielding the question.
-						fmt.Fprintf(w, "      %s\n", Dim("most files are subagent transcripts or runs with no human turn; `ritual scan --include-automated` counts the latter"))
+					case read > 0 && used == 0:
+						fmt.Fprintf(w, "      %s\n", Dim("parsed fine, then filtered out: no human turn, or outside the scan window — try `ritual scan --days 0 --include-automated`"))
+					case files > 0 && read*3 < files:
+						fmt.Fprintf(w, "      %s\n", Dim("most files are subagent transcripts, which are read as part of their parent rather than on their own"))
 					}
 					for _, root := range d.Roots[1:] {
 						fmt.Fprintf(w, "      %s\n", Dim("also reading "+filepath.ToSlash(redact.Path(root))))

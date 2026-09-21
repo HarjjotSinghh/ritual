@@ -55,7 +55,7 @@ func TestCatalogIsInternallyConsistent(t *testing.T) {
 func readerMissing(layout Layout) bool {
 	switch layout {
 	case LayoutClaudeJSONL, LayoutCodexRollout, LayoutCursorTranscript, LayoutOpenCodeSQLite,
-		LayoutGeminiChat, LayoutGrokSession, LayoutQwenJSONL, LayoutKimiState,
+		LayoutGeminiChat, LayoutGrokSession, LayoutQwenJSONL, LayoutKimiWire,
 		LayoutCopilotEvents, LayoutClineTask, LayoutPiJSONL, LayoutAiderMarkdown:
 		return false
 	}

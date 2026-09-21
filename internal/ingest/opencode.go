@@ -183,12 +183,29 @@ func readOpenCodeV2(db *sql.DB, path string, lim Limits, red *redact.Redactor) (
 			if t := timeFrom(payload, "time"); !t.IsZero() {
 				at = t
 			}
+			sawText := false
 			for _, item := range arr(payload, "content") {
 				part, ok := item.(map[string]any)
 				if !ok {
 					continue
 				}
-				appendOpenCodePart(b, part, role, at, lim, red)
+				if appendOpenCodePart(b, part, role, at, lim, red) {
+					sawText = true
+				}
+			}
+			// Most messages carry their prose in content[], but a large
+			// minority put it directly on the payload instead. Reading only the
+			// array found 594 sessions in a store holding 1520 and called the
+			// rest empty, which is the same silent-success failure as reading
+			// the wrong table.
+			if !sawText {
+				if text := str(payload, "text"); text != "" {
+					if strings.EqualFold(role, "user") {
+						b.message(session.ActorUser, at, CleanPrompt(text))
+					} else {
+						b.message(session.ActorAssistant, at, text)
+					}
+				}
 			}
 		}
 	}
@@ -299,7 +316,7 @@ func readOpenCodeLegacy(db *sql.DB, path string, lim Limits, red *redact.Redacto
 				if t := timeFrom(payload, "time"); !t.IsZero() {
 					partAt = t
 				}
-				appendOpenCodePart(b, payload, m.role, partAt, lim, red)
+				_ = appendOpenCodePart(b, payload, m.role, partAt, lim, red)
 			}
 		}
 	}
@@ -307,17 +324,22 @@ func readOpenCodeLegacy(db *sql.DB, path string, lim Limits, red *redact.Redacto
 	return collectOpenCode(index, builders, order), nil
 }
 
-// appendOpenCodePart turns one part into turns. Both schemas use the same part
-// shape; only where the part is stored changed between them.
-func appendOpenCodePart(b *turnBuilder, part map[string]any, role string, at time.Time, lim Limits, red *redact.Redactor) {
+// appendOpenCodePart turns one part into turns and reports whether it yielded
+// prose, which is what decides if the payload-level fallback is needed. Both
+// schemas use the same part shape; only where the part is stored changed.
+func appendOpenCodePart(b *turnBuilder, part map[string]any, role string, at time.Time, lim Limits, red *redact.Redactor) (sawText bool) {
 	switch str(part, "type") {
 	case "text":
 		text := str(part, "text")
+		if strings.TrimSpace(text) == "" {
+			return false
+		}
 		if strings.EqualFold(role, "user") {
 			b.message(session.ActorUser, at, CleanPrompt(text))
 		} else {
 			b.message(session.ActorAssistant, at, text)
 		}
+		return true
 	case "tool", "tool-call", "tool_use":
 		state := obj(part, "state")
 		name := str(part, "tool", "name")
@@ -349,6 +371,7 @@ func appendOpenCodePart(b *turnBuilder, part map[string]any, role string, at tim
 			b.toolCall(at, "edit", map[string]string{"files": strings.Join(names, ", ")})
 		}
 	}
+	return false
 }
 
 // collectOpenCode assembles the finished sessions in a stable order.

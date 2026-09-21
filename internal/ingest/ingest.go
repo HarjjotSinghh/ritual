@@ -515,10 +515,22 @@ func errorFromResult(m map[string]any, text string) bool {
 	return false
 }
 
-// recoverJSONLines salvages the records from a document that failed to parse as
-// a whole, by reading it as one JSON value per line. It returns nothing when
-// the file is not line-oriented, so a genuinely corrupt document still fails
+// recoverRecords salvages what it can from a document that failed to parse as a
+// whole. A session killed mid-write leaves an unterminated file, and losing
+// months of history to its last few bytes is the wrong trade.
+//
+// Two shapes are tried. Line-delimited files yield one value per line. A
+// truncated JSON array is streamed element by element, keeping every element
+// that decoded before the truncation; the incomplete tail is dropped. A file
+// that is neither yields nothing, so a genuinely corrupt document still fails
 // loudly rather than being silently half-read.
+func recoverRecords(path string) ([]any, error) {
+	if out, err := recoverJSONLines(path); err == nil && len(out) > 0 {
+		return out, nil
+	}
+	return recoverJSONArray(path)
+}
+
 func recoverJSONLines(path string) ([]any, error) {
 	out := make([]any, 0, 32)
 	err := scanJSONL(path, func(raw map[string]any) error {
@@ -527,6 +539,44 @@ func recoverJSONLines(path string) ([]any, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	return out, nil
+}
+
+// recoverJSONArray streams the elements of a possibly-truncated array. It also
+// handles an object whose payload is an array under a known key, which is how
+// these stores usually wrap a message list.
+func recoverJSONArray(path string) ([]any, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	dec := json.NewDecoder(bufio.NewReaderSize(f, 1<<20))
+	// Walk forward to the first array. In a wrapped document that is the
+	// message list; in a bare array it is the document itself.
+	for {
+		tok, tokErr := dec.Token()
+		if tokErr != nil {
+			return nil, tokErr
+		}
+		if delim, ok := tok.(json.Delim); ok && delim == '[' {
+			break
+		}
+	}
+
+	out := make([]any, 0, 64)
+	for dec.More() {
+		var item any
+		if err := dec.Decode(&item); err != nil {
+			// The truncation point. Everything before it is intact.
+			break
+		}
+		out = append(out, item)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("no complete records before the truncation")
 	}
 	return out, nil
 }

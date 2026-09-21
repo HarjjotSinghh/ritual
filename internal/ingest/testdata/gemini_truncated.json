@@ -1,0 +1,17 @@
+{
+  "sessionId": "gem-trunc",
+  "cwd": "/tmp/work/site",
+  "messages": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Update the pricing copy"
+        }
+      ],
+      "timestamp": "2026-09-04T07:00:00Z"
+    },
+    {
+      "role": "model",
+      "parts": [
+      

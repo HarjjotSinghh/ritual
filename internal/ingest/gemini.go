@@ -22,7 +22,7 @@ func readGemini(path string, lim Limits, red *redact.Redactor) ([]session.Sessio
 		// A session killed mid-write leaves an unterminated document. Losing
 		// the whole file over its last record is the wrong trade, so the
 		// records that did land are recovered line by line.
-		recovered, lineErr := recoverJSONLines(path)
+		recovered, lineErr := recoverRecords(path)
 		if lineErr != nil || len(recovered) == 0 {
 			return nil, err
 		}

@@ -152,3 +152,18 @@ func mustTime(value string) time.Time {
 	}
 	return t
 }
+
+func TestReadGeminiRecoversATruncatedFile(t *testing.T) {
+	// A session killed mid-write leaves an unterminated document. The records
+	// that landed are still worth months of history, so losing the file to its
+	// last few bytes is the wrong trade.
+	s := read(t, readGemini, "gemini_truncated.json")
+
+	prompts := s.UserTurns()
+	if len(prompts) != 1 {
+		t.Fatalf("user turns = %d, want the one complete record", len(prompts))
+	}
+	if prompts[0].Text != "Update the pricing copy" {
+		t.Fatalf("prompt = %q", prompts[0].Text)
+	}
+}

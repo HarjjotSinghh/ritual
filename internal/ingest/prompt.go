@@ -86,6 +86,7 @@ var (
 // as prompts invents workflows nobody performed.
 var syntheticPrefixes = []string{
 	"caveat: the messages below were generated",
+	"[request interrupted by user]",
 	"[request interrupted",
 	"api error",
 	"this session is being continued from a previous conversation",
@@ -98,12 +99,72 @@ var syntheticPrefixes = []string{
 	"<no message>",
 }
 
+// builtinCommands are the harness's own slash commands. They drive the client,
+// not the work, and a hundred `/model` switches are not a workflow.
+var builtinCommands = map[string]struct{}{
+	"model": {}, "clear": {}, "config": {}, "help": {}, "compact": {}, "cost": {},
+	"login": {}, "logout": {}, "status": {}, "terminal-setup": {}, "vim": {},
+	"init": {}, "memory": {}, "doctor": {}, "exit": {}, "resume": {}, "agents": {},
+	"mcp": {}, "permissions": {}, "hooks": {}, "ide": {}, "privacy-settings": {},
+	"bug": {}, "release-notes": {}, "upgrade": {}, "add-dir": {}, "export": {},
+	"fast": {}, "context": {}, "output-style": {}, "statusline": {}, "todos": {},
+	"install-github-app": {}, "migrate-installer": {}, "pr-comments": {},
+	"review": {}, "usage": {}, "settings": {}, "feedback": {}, "quit": {},
+}
+
+var (
+	commandNameRE = regexp.MustCompile(`(?is)<command-name>\s*/?([a-z0-9][a-z0-9:_-]{0,60})\s*</command-name>`)
+	commandArgsRE = regexp.MustCompile(`(?is)<command-args>(.*?)</command-args>`)
+)
+
+// SlashCommand returns the user-defined command a prompt invoked.
+//
+// This matters more than it looks. A session whose only human turn is `/eod` is
+// not an empty session — it is the most explicit statement of a repeated
+// workflow the operator can make, since they already named it. Stripping the
+// block as scaffolding, which is what the tag rules would otherwise do, threw
+// those sessions away entirely and made a heavy slash-command user look like
+// someone who never typed anything.
+//
+// Built-in client commands are rejected: `/model` is a setting, not work.
+func SlashCommand(text string) (name, args string, ok bool) {
+	m := commandNameRE.FindStringSubmatch(text)
+	if m == nil {
+		return "", "", false
+	}
+	name = strings.ToLower(strings.TrimSpace(m[1]))
+	if name == "" {
+		return "", "", false
+	}
+	// A plugin-qualified command keeps only its own name.
+	if idx := strings.LastIndex(name, ":"); idx >= 0 && idx+1 < len(name) {
+		name = name[idx+1:]
+	}
+	if _, builtin := builtinCommands[name]; builtin {
+		return "", "", false
+	}
+	if a := commandArgsRE.FindStringSubmatch(text); a != nil {
+		args = strings.TrimSpace(a[1])
+	}
+	return name, args, true
+}
+
 // CleanPrompt strips harness scaffolding from a user turn and returns the prose
 // a human actually typed. An empty result means the record was not a prompt.
 func CleanPrompt(s string) string {
 	if s == "" {
 		return ""
 	}
+	// A user-defined slash command is the whole intent, and the tag rules below
+	// would erase it, so it is resolved before they run.
+	if name, args, ok := SlashCommand(s); ok {
+		out := "/" + name
+		if args != "" {
+			out += " " + args
+		}
+		return strings.TrimSpace(out)
+	}
+
 	// Cursor wraps the real prompt; when the wrapper is present it is the only
 	// part worth keeping.
 	if m := userQueryRE.FindStringSubmatch(s); len(m) == 2 && strings.TrimSpace(m[1]) != "" {

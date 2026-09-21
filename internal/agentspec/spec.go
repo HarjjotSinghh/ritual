@@ -156,9 +156,10 @@ func Catalog() []Spec {
 		{
 			Key: "cline", DisplayName: "Cline CLI", Vendor: "Cline",
 			RootEnv: "CLINE_DATA_DIR",
-			Roots:   []string{j(".cline"), j(".cline", "data")},
-			Marker:  "tasks", Glob: "tasks/**/api_conversation_history.json", Layout: LayoutClineTask,
-			Excluded: []string{"settings", "locks", "cache", "logs", "cron"},
+			Roots:   []string{j(".cline", "data"), j(".cline")},
+			Marker:  "sessions", Glob: "sessions/**/*.messages.json", Layout: LayoutClineTask,
+			Excluded: []string{"settings", "locks", "cache", "logs", "cron", "db"},
+			Note:     "The CLI keeps sessions at ~/.cline/data/sessions/<id>/<id>.messages.json; the tasks/ layout in older builds is gone.",
 		},
 		{
 			Key: "pi", DisplayName: "Pi", Vendor: "Pi Labs",
@@ -190,10 +191,16 @@ func Keys() []string {
 	return out
 }
 
-// Root resolves the store location for a spec on this machine, honouring the
-// environment override. It returns the first candidate that exists and carries
-// the marker; ok is false when the agent is not installed here.
-func (s Spec) Root() (root string, ok bool) {
+// ResolvedRoots returns every location on this machine that holds this agent's
+// sessions, most authoritative first.
+//
+// It returns all of them rather than the first, which is a deliberate change
+// from honouring the environment override alone. A relocated store is where the
+// agent writes *now*; the default path often still holds months of history from
+// before the variable was set, and a mining tool that ignored it would silently
+// drop the larger half of the record. Both are read-only, so reading both costs
+// nothing and the file walk de-duplicates.
+func (s Spec) ResolvedRoots() []string {
 	candidates := make([]string, 0, len(s.Roots)+1)
 	if s.RootEnv != "" {
 		if v := strings.TrimSpace(os.Getenv(s.RootEnv)); v != "" {
@@ -205,8 +212,14 @@ func (s Spec) Root() (root string, ok bool) {
 	}
 	candidates = append(candidates, s.Roots...)
 
+	seen := make(map[string]struct{}, len(candidates))
+	out := make([]string, 0, len(candidates))
 	for _, c := range candidates {
 		if c == "" {
+			continue
+		}
+		c = filepath.Clean(c)
+		if _, dup := seen[c]; dup {
 			continue
 		}
 		if s.Marker != "" {
@@ -216,15 +229,28 @@ func (s Spec) Root() (root string, ok bool) {
 		} else if _, err := os.Stat(c); err != nil {
 			continue
 		}
-		return c, true
+		seen[c] = struct{}{}
+		out = append(out, c)
 	}
-	return "", false
+	return out
+}
+
+// Root returns the most authoritative store location, or ok=false when the
+// agent is not installed here.
+func (s Spec) Root() (root string, ok bool) {
+	roots := s.ResolvedRoots()
+	if len(roots) == 0 {
+		return "", false
+	}
+	return roots[0], true
 }
 
 // Discovery is the result of walking one agent's store.
 type Discovery struct {
-	Spec  Spec
+	Spec Spec
+	// Root is the most authoritative location; Roots is every location walked.
 	Root  string
+	Roots []string
 	Files []string
 	// Skipped counts entries the walk refused: excluded trees and files that
 	// could not be read. It is reported rather than hidden so a surprising
@@ -235,18 +261,30 @@ type Discovery struct {
 // Discover finds every session file for a spec. A missing store is not an
 // error: it means the agent is not installed, and ok is false.
 func Discover(s Spec) (Discovery, bool, error) {
-	root, ok := s.Root()
-	if !ok {
+	roots := s.ResolvedRoots()
+	if len(roots) == 0 {
 		return Discovery{Spec: s}, false, nil
 	}
-	d := Discovery{Spec: s, Root: root}
+	d := Discovery{Spec: s, Root: roots[0], Roots: roots}
 
 	excluded := make(map[string]struct{}, len(s.Excluded))
 	for _, e := range s.Excluded {
 		excluded[e] = struct{}{}
 	}
 
-	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+	seen := make(map[string]struct{}, 256)
+	for _, root := range roots {
+		if err := s.walkRoot(root, excluded, seen, &d); err != nil {
+			return d, true, err
+		}
+	}
+	sort.Strings(d.Files)
+	return d, true, nil
+}
+
+// walkRoot collects the session files under one root.
+func (s Spec) walkRoot(root string, excluded map[string]struct{}, seen map[string]struct{}, d *Discovery) error {
+	return filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			d.Skipped++
 			// A permission error on one subtree must not abort the walk: a
@@ -279,15 +317,13 @@ func Discover(s Spec) (Discovery, bool, error) {
 			return nil
 		}
 		if matchGlob(s.Glob, filepath.ToSlash(rel)) {
-			d.Files = append(d.Files, path)
+			if _, dup := seen[path]; !dup {
+				seen[path] = struct{}{}
+				d.Files = append(d.Files, path)
+			}
 		}
 		return nil
 	})
-	if err != nil {
-		return d, true, err
-	}
-	sort.Strings(d.Files)
-	return d, true, nil
 }
 
 // DiscoverAll walks every catalog entry, or only the given keys when any are

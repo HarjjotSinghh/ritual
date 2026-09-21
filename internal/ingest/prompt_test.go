@@ -103,3 +103,27 @@ func TestRepairMojibakeLeavesOrdinaryTextAlone(t *testing.T) {
 		t.Fatalf("repairMojibake rewrote valid text: %q", got)
 	}
 }
+
+func TestSlashCommandBecomesTheIntent(t *testing.T) {
+	in := "<command-name>/eod</command-name>\n<command-message>eod</command-message>\n<command-args>for today</command-args>"
+	got := CleanPrompt(in)
+	if got != "/eod for today" {
+		t.Fatalf("CleanPrompt = %q, want the command as the intent", got)
+	}
+}
+
+func TestBuiltinSlashCommandsAreNotIntents(t *testing.T) {
+	for _, name := range []string{"/model", "/clear", "/compact"} {
+		in := "<command-name>" + name + "</command-name><command-args></command-args>"
+		if got := CleanPrompt(in); got != "" {
+			t.Errorf("CleanPrompt(%q) = %q, want empty: a client setting is not work", name, got)
+		}
+	}
+}
+
+func TestPluginQualifiedCommandKeepsItsOwnName(t *testing.T) {
+	name, _, ok := SlashCommand("<command-name>/superpowers:brainstorming</command-name>")
+	if !ok || name != "brainstorming" {
+		t.Fatalf("SlashCommand = %q ok=%v", name, ok)
+	}
+}

@@ -84,8 +84,17 @@ Serves the last report on `127.0.0.1:4783` behind a per-run token.
 
 ## `ritual agents`
 
-Every agent in the catalog, where its sessions live, and how many files were
-found. `--all` includes agents not installed here.
+Every agent in the catalog, every location walked, and how many session files
+were found. `--all` includes agents not installed here.
+
+It counts **files**, not sessions. Most stores write one file per session, but a
+database holds thousands in one file, and an agent's file count is usually much
+higher than its session count because subagent transcripts and runs with no
+human turn are excluded. `ritual doctor` reports both numbers.
+
+When an environment override such as `CODEX_HOME` points somewhere new, ritual
+reads the default location too and de-duplicates. The variable says where the
+agent writes now; the old path often still holds most of the history.
 
 ## `ritual inventory`
 
@@ -97,6 +106,10 @@ ritual proposing something you wrote months ago.
 What ritual can and cannot see: its own directory, config, each agent's store,
 which agent CLIs are available for authoring, and the warnings from the last
 scan.
+
+Per agent it prints `N files → M sessions parsed`. `M` far below `N` is normal
+and explained inline. `M` of zero against a non-zero `N` is a bug in the reader
+or the layout, is marked in red, and is worth reporting.
 
 ## `ritual eval`
 

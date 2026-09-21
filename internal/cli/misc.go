@@ -12,6 +12,7 @@ import (
 	"github.com/HarjjotSinghh/ritual/internal/agentspec"
 	"github.com/HarjjotSinghh/ritual/internal/authoring"
 	"github.com/HarjjotSinghh/ritual/internal/classify"
+	"github.com/HarjjotSinghh/ritual/internal/ingest"
 	"github.com/HarjjotSinghh/ritual/internal/install"
 	"github.com/HarjjotSinghh/ritual/internal/inventory"
 	"github.com/HarjjotSinghh/ritual/internal/redact"
@@ -49,12 +50,21 @@ is printed either way so the difference is visible.
 					continue
 				}
 				found++
-				count := Green(fmt.Sprintf("%d sessions", len(d.Files)))
+				// A file is not a session. Most stores write one file per
+				// session, but a database holds thousands in one file, and
+				// reporting "1 session" for a 500 MB store was simply wrong.
+				unit := "session files"
+				if spec.WholeStore {
+					unit = "store file (many sessions inside)"
+				}
+				count := Green(fmt.Sprintf("%d %s", len(d.Files), unit))
 				if len(d.Files) == 0 {
-					count = Yellow("no sessions found")
+					count = Yellow("no session files found")
 				}
 				fmt.Fprintf(w, "  %-10s %-24s %s\n", Cyan(spec.Key), spec.DisplayName, count)
-				fmt.Fprintf(w, "    %s\n", Dim(redact.Path(d.Root)+"/"+spec.Glob))
+				for _, root := range d.Roots {
+					fmt.Fprintf(w, "    %s\n", Dim(filepath.ToSlash(redact.Path(root))+"/"+spec.Glob))
+				}
 				if spec.Note != "" {
 					fmt.Fprintf(w, "    %s\n", Dim(spec.Note))
 				}
@@ -283,6 +293,17 @@ func newDoctorCmd() *cobra.Command {
 				fmt.Fprintf(w, "  %s config not written yet, using defaults %s\n", Dim("·"), Dim("(ritual config --init)"))
 			}
 
+			// One scan, cross-referenced against the file counts. An agent
+			// whose files all parse to nothing used to print a tick, which is
+			// the failure mode hardest to notice and most worth reporting.
+			parsed := map[string]int{}
+			scan, scanErr := ingest.Scan(ingest.Options{Limits: ingest.DefaultLimits()})
+			if scanErr == nil {
+				for _, st := range scan.Stats {
+					parsed[st.Agent] = st.Sessions
+				}
+			}
+
 			fmt.Fprintf(w, "\n%s\n", Bold("Agents"))
 			installed := 0
 			for _, spec := range agentspec.Catalog() {
@@ -294,15 +315,34 @@ func newDoctorCmd() *cobra.Command {
 					continue
 				default:
 					installed++
+					files, sessions := len(d.Files), parsed[spec.Key]
 					mark := Green("✓")
-					if len(d.Files) == 0 {
+					switch {
+					case files == 0:
 						mark = Yellow("!")
+					case sessions == 0:
+						mark = Red("✗")
 					}
-					fmt.Fprintf(w, "  %s %-10s %d session files%s\n", mark, spec.Key, len(d.Files), skippedNote(d.Skipped))
+					fmt.Fprintf(w, "  %s %-10s %d files → %d sessions parsed%s\n",
+						mark, spec.Key, files, sessions, skippedNote(d.Skipped))
+					switch {
+					case files > 0 && sessions == 0:
+						fmt.Fprintf(w, "      %s\n", Red("every file parsed to nothing — the reader or the layout is wrong; please report this"))
+					case files > 0 && sessions*3 < files:
+						// A large gap is usually correct rather than alarming,
+						// and saying so is cheaper than fielding the question.
+						fmt.Fprintf(w, "      %s\n", Dim("most files are subagent transcripts or runs with no human turn; `ritual scan --include-automated` counts the latter"))
+					}
+					for _, root := range d.Roots[1:] {
+						fmt.Fprintf(w, "      %s\n", Dim("also reading "+filepath.ToSlash(redact.Path(root))))
+					}
 				}
 			}
 			if installed == 0 {
 				fmt.Fprintf(w, "  %s no agents found; ritual has nothing to read\n", Yellow("!"))
+			}
+			if scanErr != nil {
+				fmt.Fprintf(w, "  %s could not parse: %v\n", Red("✗"), scanErr)
 			}
 
 			fmt.Fprintf(w, "\n%s\n", Bold("Authoring"))

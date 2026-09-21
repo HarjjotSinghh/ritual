@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -165,5 +166,23 @@ func TestReadGeminiRecoversATruncatedFile(t *testing.T) {
 	}
 	if prompts[0].Text != "Update the pricing copy" {
 		t.Fatalf("prompt = %q", prompts[0].Text)
+	}
+}
+
+func TestScanSkipsEmptyFilesWithoutWarning(t *testing.T) {
+	// A session created and never written to is not a parse failure. Reporting
+	// it as one sends whoever reads the warning hunting for a truncation bug
+	// in a file with nothing in it to truncate.
+	dir := t.TempDir()
+	empty := filepath.Join(dir, "empty.jsonl")
+	if err := os.WriteFile(empty, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(empty)
+	if err != nil || info.Size() != 0 {
+		t.Fatalf("fixture is not empty: %v %v", info, err)
+	}
+	if _, err := readClaude(empty, DefaultLimits(), redact.New()); err != nil {
+		t.Fatalf("an empty file must not error on its own: %v", err)
 	}
 }

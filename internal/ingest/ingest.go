@@ -153,8 +153,16 @@ func Scan(opts Options) (*Result, error) {
 			if opts.Progress != nil {
 				opts.Progress(d.Spec.Key, len(d.Files), i)
 			}
-			if opts.Limits.MaxFileBytes > 0 && !d.Spec.WholeStore {
-				if info, statErr := os.Stat(path); statErr == nil && info.Size() > opts.Limits.MaxFileBytes {
+			if info, statErr := os.Stat(path); statErr == nil {
+				// An empty file is a session that was created and never
+				// written to. It is not a parse failure, and reporting it as
+				// one sent a reader hunting for a truncation bug in a file
+				// with nothing in it to truncate.
+				if info.Size() == 0 {
+					res.Skipped[d.Spec.Key]++
+					continue
+				}
+				if opts.Limits.MaxFileBytes > 0 && !d.Spec.WholeStore && info.Size() > opts.Limits.MaxFileBytes {
 					res.Warnings = append(res.Warnings, fmt.Sprintf("%s: skipped %s (%d bytes over limit)", d.Spec.Key, filepath.Base(path), info.Size()))
 					continue
 				}
